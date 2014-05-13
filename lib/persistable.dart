@@ -1,11 +1,14 @@
 part of activerecord;
 
 abstract class Persistable {
-  static Map<ClassMirror, Config> _config = {};
+  static Map<Type, Config> _config = {};
   
-  Config get config =>
-      (_config[reflect(this).type] == null) ?
-          _config[reflect(this).type] = this.configure() : _config[reflect(this).type];
+  Config get config {
+    if(_config[this.runtimeType] == null) {
+      _config[this.runtimeType] = this.configure();
+    }
+    return _config[this.runtimeType];
+  }
           
   Config configure() {
     var result = new Config();
@@ -20,6 +23,16 @@ abstract class Persistable {
     return schema;
   }
   
+  getProperty (String key) {
+    var mirr = reflect(this);
+    return mirr.getField(new Symbol(key)).reflectee;
+  }
+  
+  setProperty (String key, val) {
+    var mirr =reflect(this);
+    mirr.setField(new Symbol(key), val);
+  }
+  
   DatabaseAdapter getDefaultAdapter() {
     return defaultAdapter;
   }
@@ -27,8 +40,12 @@ abstract class Persistable {
   List<VariableMirror> get fields {
     var result = [];
     var classMirror = reflect(this).type;
+    do {
     classMirror.declarations.values.forEach((dec) 
         => (dec is VariableMirror) ? result.add(dec) : null);
+    classMirror = classMirror.superclass;
+    } while(classMirror != null && classMirror != reflectClass(Object) &&
+        classMirror.isAssignableTo(reflectClass(Persistable)));
     return result;
   }
   
@@ -43,14 +60,15 @@ abstract class Persistable {
   
   static find(Type type, int id) {
     var clazz = reflectClass(type);
-    return _config[clazz].adatper.findModel(_config[clazz].schema.tableName, id);
+    var empty = (clazz.newInstance(new Symbol(''), []).reflectee as Persistable);
+    return empty.config.adapter.findModel(empty, id);
   }
   
   Future<bool> save() {
-    if (config.adatper == null) {
+    if (config.adapter == null) {
       return new Future.error(new ArgumentError("Database adapter was not specified"));
     }
-    return config.adatper.saveModel(config.schema, this);
+    return config.adapter.saveModel(this.config.schema, this);
   }
   
   static VariableType convertTypeMirrorToVariableType(TypeMirror tm) {
@@ -61,48 +79,8 @@ abstract class Persistable {
     if (tm == reflectClass(bool)) return VariableType.BOOL;
     throw new UnsupportedError("Type ${tm.simpleName} is not supported.");
   }
-}
-
-class Config {
-  DatabaseAdapter _adapter;
-  String _tableName;
-  Schema _schema;
   
-  Config() {
-    _adapter = null;
-    _tableName = null;
-    _schema = null;
+  static void reset() {
+    _config = {};
   }
-  
-  
-  DatabaseAdapter get adatper => _adapter;
-  String get tableName => _tableName;
-         set tableName(String name) => _tableName = name;
-  Schema get schema => _schema;
-}
-
-class Schema {
-  String _tableName;
-  List<Variable> _variables;
-  
-  Schema(this._tableName, this._variables);
-  
-  List<Variable> get variables => _variables;
-  String get tableName => _tableName;
-}
-
-class Variable {
-  final String name;
-  final VariableType type;
-  
-  Variable(this.name, [this.type = VariableType.STRING]);
-}
-
-class VariableType {
-  static const STRING = const VariableType._(0);
-  static const NUMBER = const VariableType._(1);
-  static const BOOL = const VariableType._(2);
-  
-  final int value;
-  const VariableType._(this.value);
 }

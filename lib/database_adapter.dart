@@ -1,6 +1,6 @@
 part of activerecord;
 
 abstract class DatabaseAdapter {
-  Future<bool> saveModel(Schema schema, Persistable p);
-  Persistable findModel(String tableName, int id);
+  Future<bool> saveModel(Schema schema, Model m);
+  Future<Model> findModel(Model empty, int id);
 }
