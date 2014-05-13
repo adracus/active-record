@@ -1,5 +1,5 @@
 name: activerecord
-version: 0.0.1
+version: 0.0.2
 author: Axel Christ <adracus@gmail.com>
 description: An Active Record implementation for the Dart language
 homepage: https://github.com/Adracus/ActiveRecord

@@ -1,5 +1,5 @@
 import 'package:unittest/unittest.dart';
-import 'package:ActiveRecord/activerecord.dart';
+import 'package:activerecord/activerecord.dart';
 
 class Person extends Collection {
   get variables => [
