@@ -68,8 +68,7 @@ main(List<String> arguments) {
   });
   
   test("Test sql statement generation", () {
-    var url = "postgres://dartman:password@localhost:5432/dartbase";
-    var adapter = new PostgresAdapter(url);
+    var adapter = new PostgresAdapter(dbUri);
     var variable = new Variable("mynum", VariableType.STRING, [Constraint.NOT_NULL]);
     var schema = new Schema("MyTable", [Variable.ID_FIELD, variable]);
     expect(adapter.getPostgresType(variable.type),
@@ -82,9 +81,12 @@ main(List<String> arguments) {
         equals("CREATE TABLE IF NOT EXISTS MyTable ("
             + "id serial PRIMARY KEY,"
             + "mynum varchar(255) NOT NULL);"));
-    adapter.createTable(schema).then((val) {
-      expect(val, equals(true));
-    });
+    if (dbUri != null) {
+      print("Established connection");
+      adapter.createTable(schema).then((val) {
+        expect(val, equals(true));
+      });
+    }
   });
   
   test("Test model persistance on postgres", () {
