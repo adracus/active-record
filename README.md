@@ -25,7 +25,7 @@ var mark = person.nu;
 
 ### Create your own collection
 If you've seen ActiveRecord in Ruby or Waterline in Node, you might want to add attributes to the future model of your collection. To do so,
-you have to subclass the Collection class and override some methods (**The id attribute is always there and will always the primary key**).
+you have to subclass the Collection class and override some methods (**The id attribute is always there and will always be the primary key**).
 If you subclass, you also may specify the Database Adapter you want to use. Currently, there only is the MemoryAdapter, which does all of its
 operations in memory (as the name might hint :) )
 #### Subclassing Example
@@ -40,5 +40,5 @@ class Person extends Collection {
 }
 ```
 
-To save models, simply call the `save()` method on a model instance. This will return a Future containing a boolean, wheter it went
-good or not.
+To save models, simply call the `save()` method on a model instance. This will return a Future containing the Model (if it worked). If you
+did not specify an id, the id will automatically be incremented by the adapter. The returned model will have an id attribute.
