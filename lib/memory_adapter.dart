@@ -1,18 +1,22 @@
 part of activerecord;
 
-class MemoryAdapter extends DatabaseAdapter {
+class MemoryAdapter implements DatabaseAdapter {
   Map<String, Table> _tables = {};
   int _incr = 1;
   
   reset() => _tables.clear();
   
-  Future<bool> saveModel(Schema schema, Model m) {
+  Future<Model> saveModel(Schema schema, Model m) {
     var name = schema.tableName;
-    _tables.putIfAbsent(name, () => new Table());
     var r = new _Row();
     
     schema.variables.forEach((v) => saveVariable(r, v, m));
     _tables[name].addRow(r);
+    return new Future.value(m);
+  }
+  
+  Future<bool> createTable(Schema schema) {
+    _tables.putIfAbsent(schema.tableName, () => new Table());
     return new Future.value(true);
   }
   
@@ -35,7 +39,6 @@ class MemoryAdapter extends DatabaseAdapter {
     else {
       var row = null;
       for(Row r in _tables[tName].rows) {
-        print(r["id"].toString());
         if(id == int.parse(r["id"].toString())) {
           row = r; break;
         }

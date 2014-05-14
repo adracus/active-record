@@ -5,12 +5,13 @@ abstract class Collection {
   Schema _schema;
   
   Collection() {
-    var vars = this.variables..add(Variable.ID_FIELD);
+    var vars = [Variable.ID_FIELD]..addAll(variables);
     _schema = new Schema(this._tableName, vars);
     _adapter = this.adapter;
+    _adapter.createTable(_schema);
   }
   
-  Future<bool> saveModel(Model m) => _adapter.saveModel(_schema, m);
+  Future<Model> saveModel(Model m) => _adapter.saveModel(_schema, m);
   Future<Model> find(int id) => _adapter.findModel(this.nu, id);
   DatabaseAdapter get adapter => defaultAdapter; // Override if needed
   List<Variable> get variables => []; // Override to set Variables in Schema

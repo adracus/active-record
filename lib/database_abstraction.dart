@@ -41,15 +41,16 @@ class Schema {
 }
 
 class Variable {
-  static var ID_FIELD = new Variable("id", VariableType.NUMBER, [Constraint.AUTO_INCREMENT]);
+  static var ID_FIELD = new Variable("id", VariableType.INT,
+      [Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT]);
   final String name;
   final VariableType type;
-  HashSet<Constraint> _constraints;
+  LinkedHashSet<Constraint> _constraints;
   
   
   Variable(this.name, [this.type = VariableType.STRING, List<Constraint> constrs]) {
-    constrs == null? _constraints = new HashSet() :
-      _constraints = new HashSet.from(constrs);
+    constrs == null? _constraints = new LinkedHashSet() :
+      _constraints = new LinkedHashSet.from(constrs);
   }
   
   toString() => "$name: $type";
@@ -59,13 +60,16 @@ class Variable {
 
 class VariableType {
   static const STRING = const VariableType._(0, "String");
-  static const NUMBER = const VariableType._(1, "Number");
-  static const BOOL = const VariableType._(2, "Bool");
+  static const INT = const VariableType._(1, "Integer", numerical: true);
+  static const DOUBLE = const VariableType._(2, "Double", numerical: true);
+  static const BOOL = const VariableType._(3, "Bool");
+  static const TEXT = const VariableType._(4, "Text");
   
   final int value;
+  final bool numerical;
   final String name;
   
-  const VariableType._(this.value, this.name);
+  const VariableType._(this.value, this.name, {this.numerical : false});
   toString() => name;
 }
 
@@ -77,4 +81,5 @@ class Constraint {
   final String name;
   
   const Constraint._(this.name);
+  toString() => name;
 }

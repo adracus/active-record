@@ -13,7 +13,7 @@ class Model extends Object with DynObject<dynamic> {
   
   Model(this._parent);
   
-  Future<bool> save() => _parent.saveModel(this);
+  Future<Model> save() => _parent.saveModel(this);
   toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
   
   operator[]=(String key, v)
