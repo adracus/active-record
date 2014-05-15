@@ -16,7 +16,7 @@ var person = new Person();
     
 This new instance has now the methods you are used to use in the Active Record implementation of Ruby.
 You may ask yourself now: _"What if I don't want to instantiate a Collection but a Model?"_ - For this, there is a solution: To instantiate
-a model, which belongs to the collection you created, use the `nu`-"constructor". This "constructor is actually a getter, but it produces
+a model, which belongs to the collection you created, use the `nu`-"constructor". This "constructor" is actually a getter, but it produces
 a model which knows the parent collection:
 
 ```dart
