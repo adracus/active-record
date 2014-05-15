@@ -20,13 +20,28 @@ class MemoryAdapter implements DatabaseAdapter {
     return new Future.value(true);
   }
   
+  int _getNextId(String tname) {
+    while(_isContainedInTable(tname, "id", _incr)) {
+      _incr ++;
+    }
+    return _incr;
+  }
+  
+  bool _isContainedInTable(String tname, String key, attr) {
+    for (Row r in _tables[tname].rows) {
+      if(r[key] == attr) return true;
+    }
+    return false;
+  }
+  
   void saveVariable(Row target, Variable v, Model m) {
     if (v.constraints.length == 0) {
       target[v.name] = m[v.name]; return;
     }
     if (v.constraints.contains(Constraint.AUTO_INCREMENT) && m[v.name] == null) {
-      target[v.name] = _incr; // TODO: Improve auto increment function
-      _incr++; // This simulates auto increment (in a bad way)
+      target[v.name] = _getNextId(m.parent.schema.tableName);
+      m[v.name] = _getNextId(m.parent.schema.tableName);
+      _incr++;
     } else {
       target[v.name] = m[v.name]; return; 
     }

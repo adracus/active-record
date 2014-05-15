@@ -12,9 +12,20 @@ abstract class DynObject<T> {
 class Model extends Object with DynObject<dynamic> {
   Collection _parent;
   
+  bool _isDirty = false;
+  bool _isPersisted = false;
+  
   Model(this._parent);
   
   Future<Model> save() => _parent.save(this);
+  bool get isDirty => _isDirty;
+  bool get isPersisted => _isPersisted;
+  bool get _needsToBePersisted => (_isDirty || !_isPersisted);
+  
+  void _setClean() {
+    this._isDirty = false;
+    this._isPersisted = true;
+  }
   
   noSuchMethod(Invocation invocation) {
     var s = null;
@@ -36,8 +47,13 @@ class Model extends Object with DynObject<dynamic> {
   
   toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
   
-  operator[]=(String key, v)
-      => parent.schema.hasProperty(key) ? super[key] = v : 
-        throw new ArgumentError("${_parent.schema.tableName} does not have property $key");
+  operator[]=(String key, v) {
+    if (this._parent.schema.hasProperty(key)) {
+      super[key] = v;
+      this._isDirty = true;
+    } else {
+      throw new ArgumentError("${_parent.schema.tableName} does not have property $key");
+    }
+  }
   Collection get parent => _parent;
 }

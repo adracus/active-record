@@ -23,8 +23,29 @@ abstract class Collection {
     return (m.parameters.length > 0 && m.parameters[0].type == reflectClass(Model));
   }
   
-  Future<Model> save(Model m) => _adapter.saveModel(_schema, m);
-  Future<Model> find(int id) => _adapter.findModel(this.nu, id);
+  Future<Model> save(Model m) {
+    if (m._needsToBePersisted) {
+      var completer = new Completer<Model>();
+      _adapter.saveModel(_schema, m).then((saved) {
+        saved._setClean();
+        completer.complete(saved);
+      }).catchError((err) {
+        completer.completeError(err);
+      });
+      return completer.future;
+    }
+    return new Future.value(m);
+  }
+  Future<Model> find(int id) {
+    var completer = new Completer<Model>();
+    _adapter.findModel(this.nu, id).then((m) {
+      m._setClean();
+      completer.complete(m);
+    }).catchError((err) {
+      completer.completeError(err);
+    });
+    return completer.future;
+  }
   DatabaseAdapter get adapter => defaultAdapter; // Override if needed
   List<Variable> get variables => []; // Override to set Variables in Schema
   String get _tableName => MirrorSystem.getName(reflect(this).type.simpleName);

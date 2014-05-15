@@ -7,7 +7,6 @@ class Person extends Collection {
     new Variable("name"),
     new Variable("age", VariableType.INT)
   ];
-  get adapter => new MemoryAdapter();
   void say(Model m, String msg) {
     print(getSayText(m, msg));
   }
@@ -25,10 +24,10 @@ class PostgresModel extends Collection {
 
 main(List<String> arguments) {
   var dbUri = Platform.environment["DATABASE_URL"];
+  if (dbUri!= null) defaultAdapter = new PostgresAdapter(dbUri);
   var person = new Person();
   var postgresModel = new PostgresModel();
   
-  if (dbUri!= null) defaultAdapter = new PostgresAdapter(dbUri);
   test("Test model generation", () {
     var empty = person.nu;
     empty["id"] = 1;
@@ -52,7 +51,6 @@ main(List<String> arguments) {
         expect(mark["id"], equals(1));
         expect(mark["name"], equals("Mark"));
         expect(mark["age"], equals(16));
-        empty.parent.adapter.reset();
       });
     });
   });
@@ -68,7 +66,6 @@ main(List<String> arguments) {
     .then((_) {
       person.find(1).then((res) {
         expect(res["id"], equals(1));
-        one.parent.adapter.reset();
       });
     });
   });
@@ -88,7 +85,6 @@ main(List<String> arguments) {
             + "id serial PRIMARY KEY,"
             + "mynum varchar(255) NOT NULL);"));
     if (dbUri != null) {
-      print("Established connection");
       adapter.createTable(schema).then((val) {
         expect(val, equals(true));
       });
@@ -98,7 +94,7 @@ main(List<String> arguments) {
   test("Test model persistance on postgres", () {
     if (dbUri != null) {
       var m = postgresModel.nu;
-      m["name"] = "User";
+      m["name"] = "A new user";
       m.save().then((mo) {
         expect(mo, isNotNull);
         expect(mo["name"], "User");
@@ -109,12 +105,30 @@ main(List<String> arguments) {
   test("Test collection reflection", () {
     var p = person.nu;
     p.save().then((res) {
-      print(res);
+      expect(res, isNotNull);
     });
     p["name"] = "Fred";
     expect(p.getSayText("Hello"),
         equals("Fred wants to say 'Hello' in a normal mood"));
     expect(p.getSayText("Hello", mood: "angry"), 
         equals("Fred wants to say 'Hello' in a angry mood"));
+  });
+  
+  test("Test dirty and need to persisted management", () {
+    var p = person.nu;
+    expect(p.isDirty, isFalse);
+    expect(p.isPersisted, isFalse);
+    p["name"] = "NewName";
+    expect(p.isDirty, isTrue);
+    p.save().then((pThen) {
+      expect(pThen.isDirty, isFalse);
+      expect(pThen.isPersisted, isTrue);
+      pThen["name"] = "IhatedMyOldName";
+      expect(pThen.isDirty, isTrue);
+      pThen.save().then((pThenThen) {
+        expect(pThenThen.isPersisted, isTrue);
+        expect(pThenThen.isDirty, isFalse);
+      });
+    });
   });
 }

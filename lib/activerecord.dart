@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:collection' show LinkedHashSet;
 
 import 'package:postgresql/postgresql.dart';
+import 'package:postgresql/postgresql_pool.dart';
 
 part 'database_adapter.dart';
 part 'memory_adapter.dart';

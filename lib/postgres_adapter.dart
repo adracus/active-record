@@ -13,23 +13,35 @@ class PostgresAdapter implements DatabaseAdapter {
       conn.execute(buildCreateTableStatement(schema)).then((_) {
         completer.complete(true);
       }).catchError((e) {
-        print(e);
         completer.complete(false);
       }).whenComplete(() {
         conn.close();
       });
     }).catchError((e) {
-      print(e);
       completer.complete(false);
     });
     return completer.future;
   }
   
-  Future<Model> saveModel(Schema schema, Model m) {
+  Future<Model> saveModel(Schema schema, Model m) =>
+    m.isPersisted? executeUpdate(schema, m) : executeSave(schema, m);
+  
+  Future<Model> executeSave(Schema schema, Model m) {
     var completer = new Completer();
     connect(_uri).then((conn) {
       conn.query(buildSaveModelStatement(m)).toList().then((rows) {
         rows.forEach((row) => updateModelWithRow(row, m));
+        completer.complete(m);
+      }).catchError((e) => completer.completeError(e))
+        .whenComplete(() => conn.close());
+    });
+    return completer.future;
+  }
+  
+  Future<Model> executeUpdate(Schema schema, Model m) {
+    var completer = new Completer();
+    connect(_uri).then((conn) {
+      conn.execute(buildUpdateModelStatement(m)).then((_) {
         completer.complete(m);
       }).catchError((e) => completer.completeError(e))
         .whenComplete(() => conn.close());
@@ -86,6 +98,21 @@ class PostgresAdapter implements DatabaseAdapter {
     var lst = [];
     schema.variables.forEach((v) => lst.add(getVariableForCreate(v)));
     return "CREATE TABLE IF NOT EXISTS ${schema.tableName} (${lst.join(',')});";
+  }
+  
+  String buildUpdateModelStatement(Model m) {
+    var schema = m.parent.schema;
+    var upd = [];
+    for (Variable v in schema.variables) {
+      if (v != Variable.ID_FIELD && m[v.name] != null) {
+        if (v.type.numerical) {
+          upd.add("${v.name}=${m[v.name]}");
+        } else {
+          upd.add("${v.name}='${m[v.name]}'");
+        }
+      }
+    }
+    return "UPDATE ${schema.tableName} SET ${upd.join(',')} WHERE id=${m['id']};";
   }
   
   String buildSaveModelStatement(Model m) {
