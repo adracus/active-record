@@ -8,12 +8,32 @@ abstract class DynObject<T> {
   forEach(f(String key, T v)) => _vars.forEach(f);
 }
 
+@proxy
 class Model extends Object with DynObject<dynamic> {
   Collection _parent;
   
   Model(this._parent);
   
-  Future<Model> save() => _parent.saveModel(this);
+  Future<Model> save() => _parent.save(this);
+  
+  noSuchMethod(Invocation invocation) {
+    var s = null;
+    var posArgs;
+    var namedArgs;
+    for (MethodMirror m in _parent.getModelMethods()) {
+      if(invocation.memberName == m.simpleName) {
+        posArgs = [this]..addAll(invocation.positionalArguments);
+        namedArgs = invocation.namedArguments;
+        s = invocation.memberName;
+        break;
+      }
+    }
+    if (s != null) {
+      return reflect(this._parent)
+      .invoke(s, posArgs, namedArgs).reflectee;
+    }
+  }
+  
   toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
   
   operator[]=(String key, v)

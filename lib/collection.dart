@@ -11,7 +11,19 @@ abstract class Collection {
     _adapter.createTable(_schema);
   }
   
-  Future<Model> saveModel(Model m) => _adapter.saveModel(_schema, m);
+  List<MethodMirror> getModelMethods() {
+    var lst = [];
+    reflect(this).type.instanceMembers.forEach((Symbol k, MethodMirror m) {
+        if(m.isRegularMethod && isModelMethod(m)) lst.add(m);
+    });
+    return lst;
+  }
+  
+  bool isModelMethod(MethodMirror m) {
+    return (m.parameters.length > 0 && m.parameters[0].type == reflectClass(Model));
+  }
+  
+  Future<Model> save(Model m) => _adapter.saveModel(_schema, m);
   Future<Model> find(int id) => _adapter.findModel(this.nu, id);
   DatabaseAdapter get adapter => defaultAdapter; // Override if needed
   List<Variable> get variables => []; // Override to set Variables in Schema

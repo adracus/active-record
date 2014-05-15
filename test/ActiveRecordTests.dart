@@ -8,6 +8,13 @@ class Person extends Collection {
     new Variable("age", VariableType.INT)
   ];
   get adapter => new MemoryAdapter();
+  void say(Model m, String msg) {
+    print(getSayText(m, msg));
+  }
+  
+  String getSayText(Model m, String msg, {String mood: "normal"}) {
+    return "${m["name"]} wants to say '$msg' in a $mood mood";
+  }
 }
 
 class PostgresModel extends Collection {
@@ -22,7 +29,6 @@ main(List<String> arguments) {
   var postgresModel = new PostgresModel();
   
   if (dbUri!= null) defaultAdapter = new PostgresAdapter(dbUri);
-  
   test("Test model generation", () {
     var empty = person.nu;
     empty["id"] = 1;
@@ -98,5 +104,17 @@ main(List<String> arguments) {
         expect(mo["name"], "User");
       });
     }
+  });
+  
+  test("Test collection reflection", () {
+    var p = person.nu;
+    p.save().then((res) {
+      print(res);
+    });
+    p["name"] = "Fred";
+    expect(p.getSayText("Hello"),
+        equals("Fred wants to say 'Hello' in a normal mood"));
+    expect(p.getSayText("Hello", mood: "angry"), 
+        equals("Fred wants to say 'Hello' in a angry mood"));
   });
 }
