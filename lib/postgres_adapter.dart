@@ -7,19 +7,6 @@ class PostgresAdapter implements DatabaseAdapter {
     
   }
   
-  Future<List<Model>> findModelWhere(Collection c, List<String> args, int limit) {
-    var completer = new Completer();
-    var models = [];
-    connect(_uri).then((conn) {
-      conn.query(buildSelectModelStatement(c.schema, args, limit)).toList()
-      .then((rows) => 
-          rows.forEach((row) => models.add(updateModelWithRow(row, c.nu))))
-      .then((_) => completer.complete(models))
-      .whenComplete(() => conn.close());
-    });
-    return completer.future;
-  }
-  
   Future<bool> createTable(Schema schema) {
     var completer = new Completer();
     connect(_uri).then((conn) {
@@ -74,9 +61,8 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
-  Model updateModelWithRow(r, Model empty) {
+  void updateModelWithRow(r, Model empty) {
     r.forEach((String name, val) => empty[name] = val);
-    return empty;
   }
   
   String getPostgresType(VariableType v) {
@@ -108,26 +94,6 @@ class PostgresAdapter implements DatabaseAdapter {
     return stmnt;
   }
   
-  String buildSelectModelStatement(Schema schema, List<String> args, int limit) {
-    var tname = schema.tableName;
-    var stmnt = "SELECT * FROM $tname";
-    var clauses = [];
-    if (args.length > 1 && args.length % 2 == 0) {
-      for (int i = 0; i < args.length; i+=2) {
-        clauses.add(replaceInsert(args[i], args[i+1]));
-      }
-      stmnt += " WHERE ";
-      stmnt += clauses.join(" AND ");
-    }
-    if (limit != null) {
-      stmnt += " LIMIT $limit";
-    }
-    return stmnt += ";";
-  }
-  
-  String replaceInsert(String src, var ins)
-    => src.replaceAll(new RegExp("@"), "'$ins'"); // TODO: Escaping in all cases
-  
   String buildCreateTableStatement(Schema schema) {
     var lst = [];
     schema.variables.forEach((v) => lst.add(getVariableForCreate(v)));
@@ -135,41 +101,32 @@ class PostgresAdapter implements DatabaseAdapter {
   }
   
   String buildUpdateModelStatement(Model m) {
-    var params = {};
     var schema = m.parent.schema;
     var upd = [];
     for (Variable v in schema.variables) {
       if (v != Variable.ID_FIELD && m[v.name] != null) {
-        upd.add("${v.name}=@${v.name}");
-        params[v.name] = m[v.name];
+        if (v.type.numerical) {
+          upd.add("${v.name}=${m[v.name]}");
+        } else {
+          upd.add("${v.name}='${m[v.name]}'");
+        }
       }
     }
-    params["id"] = m["id"];
-    return substitute("UPDATE ${schema.tableName} "
-      +"SET ${upd.join(',')} WHERE id=@id;", params);
+    return "UPDATE ${schema.tableName} SET ${upd.join(',')} WHERE id=${m['id']};";
   }
   
   String buildSaveModelStatement(Model m) {
     var schema = m.parent.schema;
     var insertNames = [];
     var values = [];
-    var params = {};
     schema.variables.forEach((v) {
       if(m[v.name] != null) {
         insertNames.add(v.name);
-        values.add("@${m[v.name]}");
-        params[v.name] = m[v.name];
+        if (v.type.numerical) values.add(m[v.name]);
+        else values.add("'${m[v.name]}'");
       }
     });
-    return substitute("INSERT INTO ${schema.tableName} (${insertNames.join(',')}) "
-      + "values (${values.join(',')}) RETURNING id;", params);
+    return "INSERT INTO ${schema.tableName} (${insertNames.join(',')}) "
+      + "values (${values.join(',')}) RETURNING id;";
   }
-}
-
-class Statement {
-  final String text;
-  final Map<String, dynamic> params;
-  
-  Statement(this.text, this.params);
-  toString() => substitute(text, params);
 }

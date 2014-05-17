@@ -119,7 +119,6 @@ main(List<String> arguments) {
     expect(p.isDirty, isFalse);
     expect(p.isPersisted, isFalse);
     p["name"] = "NewName";
-    p["age"] = 33;
     expect(p.isDirty, isTrue);
     p.save().then((pThen) {
       expect(pThen.isDirty, isFalse);
@@ -130,17 +129,6 @@ main(List<String> arguments) {
         expect(pThenThen.isPersisted, isTrue);
         expect(pThenThen.isDirty, isFalse);
       });
-    });
-  });
-  
-  test("Test findModelWhere", () {
-    expect((defaultAdapter as PostgresAdapter).replaceInsert("name=@", "A name"),
-        equals("name='A name'"));
-    person.findWhere(["name=@", "IhatedMyOldName", "age>=@", 30], limit: 1).
-    then((List<Model> models) {
-      var model = models[0];
-      expect(model["age"], greaterThanOrEqualTo(30));
-      expect(model["name"], equals("IhatedMyOldName"));
     });
   });
 }

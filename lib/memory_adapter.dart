@@ -6,10 +6,6 @@ class MemoryAdapter implements DatabaseAdapter {
   
   reset() => _tables.clear();
   
-  Future<List<Model>> findModelWhere(Collection c, List<String> args, int limit) {
-    throw new Exception("Not yet implemented on Memory adapter");
-  }
-  
   Future<Model> saveModel(Schema schema, Model m) {
     var name = schema.tableName;
     var r = new _Row();
