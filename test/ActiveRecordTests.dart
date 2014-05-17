@@ -131,4 +131,15 @@ main(List<String> arguments) {
       });
     });
   });
+  
+  test("Test findModelWhere", () {
+    expect((defaultAdapter as PostgresAdapter).replaceInsert("name=@", "A name"),
+        equals("name='A name'"));
+    person.findWhere(["name=@", "IhatedMyOldName", "age>=@", 30]).
+    then((List<Model> models) {
+      var model = models[0];
+      expect(model["age"], greaterThanOrEqualTo(30));
+      expect(model["name"], equals("IhatedMyOldName"));
+    });
+  });
 }

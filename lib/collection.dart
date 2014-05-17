@@ -46,6 +46,17 @@ abstract class Collection {
     });
     return completer.future;
   }
+  
+  Future<List<Model>> findWhere(List params) {
+    var completer = new Completer<List<Model>>();
+    _adapter.findModelsWhere(this, params).then((ms) {
+      ms.forEach((m) => m._setClean());
+      completer.complete(ms);
+    }).catchError((err) {
+      completer.completeError(err);
+    });
+    return completer.future;
+  }
   DatabaseAdapter get adapter => defaultAdapter; // Override if needed
   List<Variable> get variables => []; // Override to set Variables in Schema
   String get _tableName => MirrorSystem.getName(reflect(this).type.simpleName);

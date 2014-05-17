@@ -15,6 +15,10 @@ class MemoryAdapter implements DatabaseAdapter {
     return new Future.value(m);
   }
   
+  Future<List<Model>> findModelsWhere(Collection c, List params) {
+    return new Future.error("Not yet implemented");
+  }
+  
   Future<bool> createTable(Schema schema) {
     _tables.putIfAbsent(schema.tableName, () => new Table());
     return new Future.value(true);

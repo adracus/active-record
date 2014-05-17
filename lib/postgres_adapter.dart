@@ -61,6 +61,20 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
+  Future<List<Model>> findModelsWhere(Collection c, List params) {
+    var completer = new Completer();
+    var models = [];
+    connect(_uri).then((conn) {
+      conn.query(buildSelectModelStatement(c.schema, params)).toList()
+      .then((rows) => 
+          rows.forEach((row) => models.add(updateModelWithRow(row, c.nu))))
+      .then((_) => completer.complete(models))
+      .catchError((e) => completer.completeError(e))
+      .whenComplete(() => conn.close());
+    });
+    return completer.future;
+  }
+  
   void updateModelWithRow(r, Model empty) {
     r.forEach((String name, val) => empty[name] = val);
   }
@@ -114,6 +128,23 @@ class PostgresAdapter implements DatabaseAdapter {
     }
     return "UPDATE ${schema.tableName} SET ${upd.join(',')} WHERE id=${m['id']};";
   }
+  
+  String buildSelectModelStatement(Schema schema, List args) {
+    var tname = schema.tableName;
+    var stmnt = "SELECT * FROM $tname";
+    var clauses = [];
+    if (args.length > 1 && args.length % 2 == 0) {
+      for (int i = 0; i < args.length; i+=2) {
+        clauses.add(replaceInsert(args[i], args[i+1]));
+      }
+      stmnt += " WHERE ";
+      stmnt += clauses.join(" AND ");
+    }
+    return stmnt += ";";
+  }
+  
+  String replaceInsert(String src, var ins)
+    => src.replaceAll(new RegExp("@"), "'$ins'"); // TODO: Escaping in all cases
   
   String buildSaveModelStatement(Model m) {
     var schema = m.parent.schema;
