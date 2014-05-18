@@ -44,35 +44,13 @@ class Person extends Collection {
   void say(Model m, String msg) => print("${m["name"]} says: '$msg'");
 }
 ```
-
-##### Saving, finding and querying models
-###### Saving models
-To save models, simply call the `save()` method on a model instance. This will return a Future containing the Model (if it worked). If you
-did not specify an id, the id will automatically be incremented by the adapter. The returned model will have an id attribute. Example code:
-
-```dart
-myPerson.save().then((Model savedMyPerson) ... // Do something with the saved person
-```
-###### Finding models by id
-To find models, call the `find(int id)` method on a collection instance. This returns a Future containing the Model and will throw an error
-if the specified Model does not exist:
-
-```dart
-person.find(1).then((Model foundModel) ..,. // Do something with the found person
-```
-###### Querying models by specific criteria
-In order to find Models where several conditions apply, use the `where(sql, args)`-method. This method will give you a list of Models which
-fit to the given criteria. The where syntax is the same as in the ruby implementation of ActiveRecord. So, if you want to query for a person
-with name "mark" and an age greater than 30, the code would look like this:
-
-```dart
-person.where("name = ? AND age >= ?", ["mark", 30]).then(List<Model> models) ...
-```
-
-The question marks will be replaced by the parameters given in the args list.
-
-**!!!CAUTION!!!**: Only parameters given in the args list will be escaped. If you concatenate strings and put those into the sql parameter,
-you are vulnerable to SQL-Injection!
+Lifecycle methods are also available:
+  + beforeCreate(Model m)
+  + afterCreate(Model m)
+  + beforeUpdate(Model m)
+  + afterUpdate(Model m)
+  + beforeDestroy(Model m)
+  + afterDestroy()
 
 ##### Define instance methods of Models
 To define an instance method of a Model, you don't need to modify the Model class (since every instance of every Collection will be a Model).
@@ -89,3 +67,32 @@ myPerson["name"] = "Duffman";
 myPerson.say("hello");
 ```
 The method call will be redirected from the Model to its parent collection, adding itself as the first parameter.
+
+### Saving, finding and querying models
+#### Saving models
+To save models, simply call the `save()` method on a model instance. This will return a Future containing the Model (if it worked). If you
+did not specify an id, the id will automatically be incremented by the adapter. The returned model will have an id attribute. Example code:
+
+```dart
+myPerson.save().then((Model savedMyPerson) ... // Do something with the saved person
+```
+#### Finding models by id
+To find models, call the `find(int id)` method on a collection instance. This returns a Future containing the Model and will throw an error
+if the specified Model does not exist:
+
+```dart
+person.find(1).then((Model foundModel) ..,. // Do something with the found person
+```
+#### Querying models by specific criteria
+In order to find Models where several conditions apply, use the `where(sql, args)`-method. This method will give you a list of Models which
+fit to the given criteria. The where syntax is the same as in the ruby implementation of ActiveRecord. So, if you want to query for a person
+with name "mark" and an age greater than 30, the code would look like this:
+
+```dart
+person.where("name = ? AND age >= ?", ["mark", 30]).then(List<Model> models) ...
+```
+
+The question marks will be replaced by the parameters given in the args list.
+
+**!!!CAUTION!!!**: Only parameters given in the args list will be escaped. If you concatenate strings and put those into the sql parameter,
+you are vulnerable to SQL-Injection!
