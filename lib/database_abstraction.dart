@@ -43,19 +43,24 @@ class Schema {
 class Variable {
   static var ID_FIELD = new Variable("id", VariableType.INT,
       [Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT]);
+  static var CREATED_AT = new Variable("created_at", VariableType.DATETIME,
+      [Constraint.NOT_NULL]);
+  static var UPDATED_AT = new Variable("updated_at", VariableType.DATETIME,
+      [Constraint.NOT_NULL]);
+  static var MODEL_STUBS = [ID_FIELD, CREATED_AT, UPDATED_AT];
   final String name;
   final VariableType type;
-  LinkedHashSet<Constraint> _constraints;
+  final LinkedHashSet<Constraint> _constraints;
   
   
-  Variable(this.name, [this.type = VariableType.STRING, List<Constraint> constrs]) {
-    constrs == null? _constraints = new LinkedHashSet() :
-      _constraints = new LinkedHashSet.from(constrs);
-  }
+  Variable(this.name, [this.type = VariableType.STRING, List<Constraint> constrs]) 
+      : _constraints = _constraintListToSet(constrs);
+  
+  static LinkedHashSet<Constraint> _constraintListToSet(List<Constraint> constrs)
+    => constrs == null? new LinkedHashSet() : new LinkedHashSet.from(constrs);
   
   toString() => "$name: $type";
-  List<Constraint> get constraints =>
-      _constraints == null ? [] : new List.from(_constraints);
+  List<Constraint> get constraints => new List.from(_constraints);
 }
 
 class VariableType {
@@ -64,6 +69,7 @@ class VariableType {
   static const DOUBLE = const VariableType._(2, "Double", numerical: true);
   static const BOOL = const VariableType._(3, "Bool");
   static const TEXT = const VariableType._(4, "Text");
+  static const DATETIME = const VariableType._(5, "Datetime");
   
   final int value;
   final bool numerical;

@@ -3,9 +3,7 @@ part of activerecord;
 class PostgresAdapter implements DatabaseAdapter {
   String _uri;
   
-  PostgresAdapter(this._uri) {
-    
-  }
+  PostgresAdapter(this._uri);
   
   Future<bool> createTable(Schema schema) {
     var completer = new Completer();
@@ -23,10 +21,7 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
-  Future<Model> saveModel(Schema schema, Model m) =>
-    m.isPersisted? executeUpdate(schema, m) : executeSave(schema, m);
-  
-  Future<Model> executeSave(Schema schema, Model m) {
+  Future<Model> saveModel(Schema schema, Model m) {
     var completer = new Completer();
     connect(_uri).then((conn) {
       conn.query(buildSaveModelStatement(m)).toList().then((rows) {
@@ -38,7 +33,7 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
-  Future<Model> executeUpdate(Schema schema, Model m) {
+  Future<Model> updateModel(Schema schema, Model m) {
     var completer = new Completer();
     connect(_uri).then((conn) {
       conn.execute(buildUpdateModelStatement(m)).then((_) {
@@ -49,9 +44,10 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
-  Future<Model> findModel(Model empty, int id) {
+  Future<Model> findModel(Collection c, int id) {
     var completer = new Completer();
-    var tName = empty.parent.schema.tableName;
+    var tName = c.schema.tableName;
+    var empty = c.nu;
     connect(_uri).then((conn) {
       conn.query("SELECT * FROM $tName where id=$id LIMIT 1").toList()
       .then((rows) => rows.forEach((row) => updateModelWithRow(row, empty)))
@@ -89,8 +85,10 @@ class PostgresAdapter implements DatabaseAdapter {
         return "float8";
       case VariableType.STRING:
         return "varchar(255)";
+      case VariableType.DATETIME:
+        return "date";
       default:
-        throw new ArgumentError("Not supported");
+        return "varchar(255)";
     }
   }
   

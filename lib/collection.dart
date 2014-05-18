@@ -5,7 +5,7 @@ abstract class Collection {
   Schema _schema;
   
   Collection() {
-    var vars = [Variable.ID_FIELD]..addAll(variables);
+    var vars = Variable.MODEL_STUBS..addAll(variables);
     _schema = new Schema(this._tableName, vars);
     _adapter = this.adapter;
     _adapter.createTable(_schema);
@@ -25,8 +25,16 @@ abstract class Collection {
   
   Future<Model> save(Model m) {
     if (m._needsToBePersisted) {
+      m["updated_at"] = new DateTime.now();
+      Future<Model> f;
       var completer = new Completer<Model>();
-      _adapter.saveModel(_schema, m).then((saved) {
+      if (m.isPersisted) { 
+          f = _adapter.updateModel(schema, m);
+      } else {
+        m["created_at"] = new DateTime.now();
+        f = _adapter.saveModel(schema, m);
+      }
+      f.then((saved) {
         saved._setClean();
         completer.complete(saved);
       }).catchError((err) {
@@ -38,7 +46,7 @@ abstract class Collection {
   }
   Future<Model> find(int id) {
     var completer = new Completer<Model>();
-    _adapter.findModel(this.nu, id).then((m) {
+    _adapter.findModel(this, id).then((m) {
       m._setClean();
       completer.complete(m);
     }).catchError((err) {
