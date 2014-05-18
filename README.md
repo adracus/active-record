@@ -1,6 +1,5 @@
 ActiveRecord
 ============
-[![Build Status](https://drone.io/github.com/Adracus/ActiveRecord/status.png)](https://drone.io/github.com/Adracus/ActiveRecord/latest)
 
 Implementation of the [Active Record pattern](http://en.wikipedia.org/wiki/Active_record_pattern) with some specialties from the Dart language.
 
@@ -25,10 +24,10 @@ var mark = person.nu;
 
 ### Create your own collection
 If you've seen ActiveRecord in Ruby or Waterline in Node, you might want to add attributes to the future model of your collection. To do so,
-you have to subclass the Collection class and override some methods (**The id attribute is always there and will always be the primary key**).
-If you subclass, you also may specify the Database Adapter you want to use. Currently, there are two adapters: The MemoryAdapter (which does
-all of its operations in-memory) and the PostgresAdapter (which operates on a Postgres database with a given connection uri). The uri has to be
-in the following format:
+you have to subclass the Collection class and override some methods. **The id field, the created\_at and the updated\_at field will be inserted
+automatically and also updated automatically**.
+If you subclass, you also may specify the Database Adapter you want to use. Currently, there is only the postgres adapter,
+which needs an uri to be instantiated. The uri has to be in the following format:
 
     postgres://<username>:<password>@<host>:<port>/<database>
 Thanks to [xxgreg](https://github.com/xxgreg) for his awesome [postgres driver for dart](https://github.com/xxgreg/postgresql)!
@@ -45,11 +44,34 @@ class Person extends Collection {
 }
 ```
 
-##### Saving and finding models
+##### Saving, finding and querying models
+###### Saving models
 To save models, simply call the `save()` method on a model instance. This will return a Future containing the Model (if it worked). If you
-did not specify an id, the id will automatically be incremented by the adapter. The returned model will have an id attribute.
+did not specify an id, the id will automatically be incremented by the adapter. The returned model will have an id attribute. Example code:
+
+```dart
+myPerson.save().then((Model savedMyPerson) ... // Do something with the saved person
+```
+###### Finding models by id
 To find models, call the `find(int id)` method on a collection instance. This returns a Future containing the Model and will throw an error
-if the specified Model does not exist.
+if the specified Model does not exist:
+
+```dart
+person.find(1).then((Model foundModel) ..,. // Do something with the found person
+```
+###### Querying models by specific criteria
+In order to find Models where several conditions apply, use the `where(sql, args)`-method. This method will give you a list of Models which
+fit to the given criteria. The where syntax is the same as in the ruby implementation of ActiveRecord. So, if you want to query for a person
+with name "mark" and an age greater than 30, the code would look like this:
+
+```dart
+person.where("name = ? AND age >= ?", ["mark", 30]).then(List<Model> models) ...
+```
+
+The question marks will be replaced by the parameters given in the args list.
+
+**!!!CAUTION!!!**: Only parameters given in the args list will be escaped. If you concatenate strings and put those into the sql parameter,
+you are vulnerable to SQL-Injection!
 
 ##### Define instance methods of Models
 To define an instance method of a Model, you don't need to modify the Model class (since every instance of every Collection will be a Model).
