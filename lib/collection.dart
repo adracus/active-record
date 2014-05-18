@@ -55,9 +55,9 @@ abstract class Collection {
     return completer.future;
   }
   
-  Future<List<Model>> findWhere(List params) {
+  Future<List<Model>> where(String sql, List params) {
     var completer = new Completer<List<Model>>();
-    _adapter.findModelsWhere(this, params).then((ms) {
+    _adapter.modelsWhere(this, sql, params).then((ms) {
       ms.forEach((m) => m._setClean());
       completer.complete(ms);
     }).catchError((err) {

@@ -133,9 +133,7 @@ main(List<String> arguments) {
   });
   
   test("Test findModelWhere", () {
-    expect((defaultAdapter as PostgresAdapter).replaceInsert("name=@", "A name"),
-        equals("name='A name'"));
-    person.findWhere(["name=@", "IhatedMyOldName", "age>=@", 30]).
+    person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
     then((List<Model> models) {
       var model = models[0];
       expect(model["age"], greaterThanOrEqualTo(30));

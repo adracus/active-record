@@ -24,7 +24,8 @@ class PostgresAdapter implements DatabaseAdapter {
   Future<Model> saveModel(Schema schema, Model m) {
     var completer = new Completer();
     connect(_uri).then((conn) {
-      conn.query(buildSaveModelStatement(m)).toList().then((rows) {
+      var s = buildSaveModelStatement(m);
+      conn.query(s.sql, s.values).toList().then((rows) {
         rows.forEach((row) => updateModelWithRow(row, m));
         completer.complete(m);
       }).catchError((e) => completer.completeError(e))
@@ -36,7 +37,8 @@ class PostgresAdapter implements DatabaseAdapter {
   Future<Model> updateModel(Schema schema, Model m) {
     var completer = new Completer();
     connect(_uri).then((conn) {
-      conn.execute(buildUpdateModelStatement(m)).then((_) {
+      var s = buildUpdateModelStatement(m);
+      conn.execute(s.sql, s.values).then((_) {
         completer.complete(m);
       }).catchError((e) => completer.completeError(e))
         .whenComplete(() => conn.close());
@@ -57,11 +59,12 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
-  Future<List<Model>> findModelsWhere(Collection c, List params) {
+  Future<List<Model>> modelsWhere(Collection c, String sql, List params) {
     var completer = new Completer();
     var models = [];
     connect(_uri).then((conn) {
-      conn.query(buildSelectModelStatement(c.schema, params)).toList()
+      Statement s = buildSelectModelStatement(c.schema, sql, params);
+      conn.query(s.sql, s.values).toList()
       .then((rows) => 
           rows.forEach((row) => models.add(updateModelWithRow(row, c.nu))))
       .then((_) => completer.complete(models))
@@ -112,50 +115,66 @@ class PostgresAdapter implements DatabaseAdapter {
     return "CREATE TABLE IF NOT EXISTS ${schema.tableName} (${lst.join(',')});";
   }
   
-  String buildUpdateModelStatement(Model m) {
+  Statement buildUpdateModelStatement(Model m) {
     var schema = m.parent.schema;
     var upd = [];
+    var s = new Statement();
     for (Variable v in schema.variables) {
       if (v != Variable.ID_FIELD && m[v.name] != null) {
-        if (v.type.numerical) {
-          upd.add("${v.name}=${m[v.name]}");
-        } else {
-          upd.add("${v.name}='${m[v.name]}'");
-        }
+        upd.add("${v.name}=@${v.name}");
+        s.addValue(v.name, m[v.name]);
       }
     }
-    return "UPDATE ${schema.tableName} SET ${upd.join(',')} WHERE id=${m['id']};";
+    s.addValue("id", m["id"]);
+    s.sql = "UPDATE ${schema.tableName} SET ${upd.join(',')} WHERE id=@id;";
+    return s;
   }
   
-  String buildSelectModelStatement(Schema schema, List args) {
-    var tname = schema.tableName;
-    var stmnt = "SELECT * FROM $tname";
+  Statement buildSelectModelStatement(Schema schema, String sql, List args) {
+    var s = new Statement();
+    var stmnt = "SELECT * FROM ${schema.tableName} WHERE ";
     var clauses = [];
-    if (args.length > 1 && args.length % 2 == 0) {
-      for (int i = 0; i < args.length; i+=2) {
-        clauses.add(replaceInsert(args[i], args[i+1]));
-      }
-      stmnt += " WHERE ";
-      stmnt += clauses.join(" AND ");
+    for (int i = 0; i < args.length; i++) {
+      s.addValue("param${i+1}", args[i]);
     }
-    return stmnt += ";";
+    s.sql = stmnt + replacePlaceholders(sql) + ";";
+    return s;
   }
   
-  String replaceInsert(String src, var ins)
-    => src.replaceAll(new RegExp("@"), "'$ins'"); // TODO: Escaping in all cases
+  String replacePlaceholders(String sql) {
+    var num = 1;
+    return sql.replaceAllMapped(new RegExp(r'\?'), (Match m) {
+      var res = "@param$num";
+      num++;
+      return res;
+    });
+  }
   
-  String buildSaveModelStatement(Model m) {
+  Statement buildSaveModelStatement(Model m) {
     var schema = m.parent.schema;
     var insertNames = [];
     var values = [];
+    var s = new Statement();
     schema.variables.forEach((v) {
       if(m[v.name] != null) {
         insertNames.add(v.name);
-        if (v.type.numerical) values.add(m[v.name]);
-        else values.add("'${m[v.name]}'");
+        values.add("@${v.name}");
+        s.addValue(v.name, m[v.name]);
       }
     });
-    return "INSERT INTO ${schema.tableName} (${insertNames.join(',')}) "
+    s.sql = "INSERT INTO ${schema.tableName} (${insertNames.join(',')}) "
       + "values (${values.join(',')}) RETURNING id;";
+    return s;
   }
+}
+
+class Statement {
+  Map<String, dynamic> _values = {};
+  String _sql = "";
+  
+  addValue(String key, value) => _values[key] = value;
+  forEachValue(f(String k, v)) => _values.forEach(f);
+  set sql(String sql) => this._sql = sql;
+  String get sql => this._sql;
+  Map<String, dynamic> get values => this._values;
 }
