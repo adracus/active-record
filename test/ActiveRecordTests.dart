@@ -133,11 +133,29 @@ main(List<String> arguments) {
   });
   
   test("Test findModelWhere", () {
+    var test = person.nu;
+    test["name"] = "IhatedMyOldName";
+    test["age"] = 300;
+    test.save().then((saved) {
+      expect(saved, isNotNull);
+      person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
+      then((List<Model> models) {
+        var model = models[0];
+        expect(model["age"], greaterThanOrEqualTo(30));
+        expect(model["name"], equals("IhatedMyOldName"));
+      });
+    }).catchError((e) => print(e));
+  });
+  
+  test("Test model destroy", () {
     person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
     then((List<Model> models) {
       var model = models[0];
       expect(model["age"], greaterThanOrEqualTo(30));
       expect(model["name"], equals("IhatedMyOldName"));
+      model.destroy().then((val) {
+        expect(val, isTrue);
+      });
     });
   });
 }

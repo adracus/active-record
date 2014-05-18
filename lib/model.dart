@@ -10,7 +10,7 @@ abstract class DynObject<T> {
 
 @proxy
 class Model extends Object with DynObject<dynamic> {
-  Collection _parent;
+  final Collection _parent;
   
   bool _isDirty = false;
   bool _isPersisted = false;
@@ -18,6 +18,7 @@ class Model extends Object with DynObject<dynamic> {
   Model(this._parent);
   
   Future<Model> save() => _parent.save(this);
+  Future<bool> destroy() => _parent.destroy(this);
   bool get isDirty => _isDirty;
   bool get isPersisted => _isPersisted;
   bool get _needsToBePersisted => (_isDirty || !_isPersisted);

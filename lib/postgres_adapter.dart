@@ -21,6 +21,18 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
+  Future<bool> destroyModel(Model m) {
+    var completer = new Completer();
+    connect(_uri).then((conn) {
+      var s = buildDestroyModelStatement(m);
+      conn.execute(s.sql, s.values).then((_)
+        => completer.complete(true)).catchError((e)
+        => completer.completeError(e)).whenComplete(()
+        => conn.close());
+    });
+    return completer.future;
+  }
+  
   Future<Model> saveModel(Schema schema, Model m) {
     var completer = new Completer();
     connect(_uri).then((conn) {
@@ -30,7 +42,7 @@ class PostgresAdapter implements DatabaseAdapter {
         completer.complete(m);
       }).catchError((e) => completer.completeError(e))
         .whenComplete(() => conn.close());
-    });
+    }).catchError((e) => completer.completeError(e));
     return completer.future;
   }
   
@@ -42,7 +54,7 @@ class PostgresAdapter implements DatabaseAdapter {
         completer.complete(m);
       }).catchError((e) => completer.completeError(e))
         .whenComplete(() => conn.close());
-    });
+    }).catchError((e) => completer.completeError(e));
     return completer.future;
   }
   
@@ -55,27 +67,31 @@ class PostgresAdapter implements DatabaseAdapter {
       .then((rows) => rows.forEach((row) => updateModelWithRow(row, empty)))
       .then((_) => completer.complete(empty))
       .whenComplete(() => conn.close());
-    });
+    }).catchError((e) => completer.completeError(e));
     return completer.future;
   }
   
   Future<List<Model>> modelsWhere(Collection c, String sql, List params) {
     var completer = new Completer();
-    var models = [];
     connect(_uri).then((conn) {
       Statement s = buildSelectModelStatement(c.schema, sql, params);
       conn.query(s.sql, s.values).toList()
-      .then((rows) => 
-          rows.forEach((row) => models.add(updateModelWithRow(row, c.nu))))
-      .then((_) => completer.complete(models))
+      .then((rows) {
+        var models = [];
+        rows.forEach((row) => models.add(updateModelWithRow(row, c.nu)));
+        return models;
+      })
+      .then((models) 
+          => completer.complete(models))
       .catchError((e) => completer.completeError(e))
       .whenComplete(() => conn.close());
-    });
+    }).catchError((e) => completer.completeError(e));
     return completer.future;
   }
   
-  void updateModelWithRow(r, Model empty) {
+  Model updateModelWithRow(r, Model empty) {
     r.forEach((String name, val) => empty[name] = val);
+    return empty;
   }
   
   String getPostgresType(VariableType v) {
@@ -148,6 +164,13 @@ class PostgresAdapter implements DatabaseAdapter {
       num++;
       return res;
     });
+  }
+  
+  Statement buildDestroyModelStatement(Model m) {
+    var s = new Statement();
+    s.sql = "DELETE FROM ${m.parent.schema.tableName} WHERE id = @id";
+    s.addValue("id", m["id"]);
+    return s;
   }
   
   Statement buildSaveModelStatement(Model m) {
