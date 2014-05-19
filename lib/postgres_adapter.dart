@@ -58,23 +58,10 @@ class PostgresAdapter implements DatabaseAdapter {
     return completer.future;
   }
   
-  Future<Model> findModel(Collection c, int id) {
-    var completer = new Completer();
-    var tName = c.schema.tableName;
-    var empty = c.nu;
-    connect(_uri).then((conn) {
-      conn.query("SELECT * FROM $tName where id=$id LIMIT 1").toList()
-      .then((rows) => rows.forEach((row) => updateModelWithRow(row, empty)))
-      .then((_) => completer.complete(empty))
-      .whenComplete(() => conn.close());
-    }).catchError((e) => completer.completeError(e));
-    return completer.future;
-  }
-  
-  Future<List<Model>> modelsWhere(Collection c, String sql, List params) {
+  Future<List<Model>> modelsWhere(Collection c, String sql, List params, int limit, int offset) {
     var completer = new Completer();
     connect(_uri).then((conn) {
-      Statement s = buildSelectModelStatement(c.schema, sql, params);
+      Statement s = buildSelectModelStatement(c.schema, sql, params, limit, offset);
       conn.query(s.sql, s.values).toList()
       .then((rows) {
         var models = [];
@@ -146,13 +133,18 @@ class PostgresAdapter implements DatabaseAdapter {
     return s;
   }
   
-  Statement buildSelectModelStatement(Schema schema, String sql, List args) {
+  Statement buildSelectModelStatement(Schema schema, String sql, List args, int limit, int offset) {
     var s = new Statement();
-    var stmnt = "SELECT * FROM ${schema.tableName} WHERE ";
-    var clauses = [];
-    for (int i = 0; i < args.length; i++) {
-      s.addValue("param${i+1}", args[i]);
+    var stmnt = "SELECT * FROM ${schema.tableName} ";
+    if (sql!= null && sql.length > 0) {
+      stmnt += "WHERE ";
+      var clauses = [];
+      for (int i = 0; i < args.length; i++) {
+        s.addValue("param${i+1}", args[i]);
+      }
     }
+    if (limit != null) stmnt += "LIMIT $limit ";
+    if (offset != null) stmnt += "OFFSET $offset";
     s.sql = stmnt + replacePlaceholders(sql) + ";";
     return s;
   }

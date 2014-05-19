@@ -71,18 +71,23 @@ abstract class Collection {
   }
   Future<Model> find(int id) {
     var completer = new Completer<Model>();
-    _adapter.findModel(this, id).then((m) {
-      m._setClean();
-      completer.complete(m);
-    }).catchError((err) {
-      completer.completeError(err);
-    });
+    where("id = ?", [id], limit: 1).then((List<Model> models) {
+      if (models.length != 1) {
+        completer.completeError("Invalid result: ${models.length} found");
+      } else {
+        completer.complete(models[0]);
+      }
+    }).catchError((e) => completer.completeError(e));
     return completer.future;
   }
   
-  Future<List<Model>> where(String sql, List params) {
+  Future<List<Model>> all({int limit, int offset}) {
+    return where("", [], limit: limit, offset: offset);
+  }
+  
+  Future<List<Model>> where(String sql, List params, {int limit, int offset}) {
     var completer = new Completer<List<Model>>();
-    _adapter.modelsWhere(this, sql, params).then((ms) {
+    _adapter.modelsWhere(this, sql, params, limit, offset).then((ms) {
       ms.forEach((m) => m._setClean());
       completer.complete(ms);
     }).catchError((err) {

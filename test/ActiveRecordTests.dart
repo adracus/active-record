@@ -158,4 +158,10 @@ main(List<String> arguments) {
       });
     });
   });
+  
+  test("Test limit, model all", () {
+    person.all(limit: 10).then((List<Model> models) {
+      expect(models.length, equals(10));
+    });
+  });
 }

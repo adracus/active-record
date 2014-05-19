@@ -74,14 +74,14 @@ To save models, simply call the `save()` method on a model instance. This will r
 did not specify an id, the id will automatically be incremented by the adapter. The returned model will have an id attribute. Example code:
 
 ```dart
-myPerson.save().then((Model savedMyPerson) ... // Do something with the saved person
+myPerson.save().then((Model savedMyPerson) // Do something with the saved person
 ```
 #### Finding models by id
 To find models, call the `find(int id)` method on a collection instance. This returns a Future containing the Model and will throw an error
 if the specified Model does not exist:
 
 ```dart
-person.find(1).then((Model foundModel) ..,. // Do something with the found person
+person.find(1).then((Model foundModel) // Do something with the found person
 ```
 #### Querying models by specific criteria
 In order to find Models where several conditions apply, use the `where(sql, args)`-method. This method will give you a list of Models which
@@ -89,10 +89,16 @@ fit to the given criteria. The where syntax is the same as in the ruby implement
 with name "mark" and an age greater than 30, the code would look like this:
 
 ```dart
-person.where("name = ? AND age >= ?", ["mark", 30]).then(List<Model> models) ...
+person.where("name = ? AND age >= ?", ["mark", 30]).then(List<Model> models) // Do something with the found models
 ```
 
-The question marks will be replaced by the parameters given in the args list.
+The question marks will be replaced by the parameters given in the args list. It is also
+possible to limit and to offset the amount of `collection.where` and `collection.all` by adding the
+optional named parameter limit and/or offset:
+
+```dart
+person.all(limit: 100, offset: 100).then(List<Model> models) // Do something with the found models
+```
 
 **!!!CAUTION!!!**: Only parameters given in the args list will be escaped. If you concatenate strings and put those into the sql parameter,
 you are vulnerable to SQL-Injection!
