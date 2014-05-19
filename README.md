@@ -38,7 +38,7 @@ Thanks to [xxgreg](https://github.com/xxgreg) for his awesome [postgres driver f
 class Person extends Collection {
   get variables => [
     new Variable("name"),
-    new Variable("age", VariableType.NUMBER)
+    new Variable("age", type: VariableType.NUMBER)
   ];
   get adapter => new PostgresAdapter(/* your uri here*/);
   void say(Model m, String msg) => print("${m["name"]} says: '$msg'");
@@ -63,7 +63,7 @@ void say(Model m, String msg) => print("${m["name"]} says: '$msg'");
 If you now want to call this method on a model instance, call it as if the model argument wouldn't be there, for example:
 ```dart
 var myPerson = person.nu;
-myPerson["name"] = "Duffman";
+myPerson.name = "Duffman";
 myPerson.say("hello");
 ```
 The method call will be redirected from the Model to its parent collection, adding itself as the first parameter.
@@ -82,8 +82,8 @@ Validations have to be defined when defining the variables of a Model, like so:
 
 ```dart
 get variables => [
-  new Variable("name", VariableType.STRING, [], [new Length(max: 50, min: 2)]),
-  new Variable("age", VariableType.INT)
+  new Variable("name", validations: [new Length(max: 50, min: 2)]),
+  new Variable("age", type: VariableType.INT)
 ];
 ```
 Here, the validation `Length` is used. Other available validations are:

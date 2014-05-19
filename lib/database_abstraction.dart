@@ -41,20 +41,20 @@ class Schema {
 }
 
 class Variable {
-  static var ID_FIELD = new Variable("id", VariableType.INT,
-      [Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT]);
-  static var CREATED_AT = new Variable("created_at", VariableType.DATETIME,
-      [Constraint.NOT_NULL]);
-  static var UPDATED_AT = new Variable("updated_at", VariableType.DATETIME,
-      [Constraint.NOT_NULL]);
+  static var ID_FIELD = new Variable("id", type: VariableType.INT,
+      constrs: [Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT]);
+  static var CREATED_AT = new Variable("created_at", type: VariableType.DATETIME,
+      constrs: [Constraint.NOT_NULL]);
+  static var UPDATED_AT = new Variable("updated_at", type: VariableType.DATETIME,
+      constrs: [Constraint.NOT_NULL]);
   static var MODEL_STUBS = [ID_FIELD, CREATED_AT, UPDATED_AT];
   final String name;
   final VariableType type;
   final LinkedHashSet<Constraint> _constraints;
   final List<Validation> validations;
   
-  Variable(this.name, [this.type = VariableType.STRING, 
-     List<Constraint> constrs = const[],  this.validations = const[]]) 
+  Variable(this.name, {this.type: VariableType.STRING, 
+     List<Constraint> constrs: const[],  this.validations: const[]}) 
       : _constraints = _constraintListToSet(constrs);
   
   static LinkedHashSet<Constraint> _constraintListToSet(List<Constraint> constrs)

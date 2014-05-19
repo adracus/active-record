@@ -29,6 +29,18 @@ class Model extends Object with DynObject<dynamic> {
   }
   
   noSuchMethod(Invocation invocation) {
+    if (invocation.isMethod) return routeToParentMethod(invocation);
+    if (invocation.isGetter) {
+      return _vars[MirrorSystem.getName(invocation.memberName)];
+    }
+    if (invocation.isSetter) {
+      var key = MirrorSystem.getName(invocation.memberName);
+      key = key.substring(0, key.length -1);
+      _setVariable(key, invocation.positionalArguments[0]);
+    }
+  }
+  
+  routeToParentMethod(Invocation invocation) {
     var s = null;
     var posArgs;
     var namedArgs;
@@ -46,9 +58,9 @@ class Model extends Object with DynObject<dynamic> {
     }
   }
   
-  toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
+  String toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
   
-  operator[]=(String key, v) {
+  _setVariable(String key, v) {
     if (this._parent.schema.hasProperty(key)) {
       super[key] = v;
       this._isDirty = true;
@@ -56,5 +68,7 @@ class Model extends Object with DynObject<dynamic> {
       throw new ArgumentError("${_parent.schema.tableName} does not have property $key");
     }
   }
+  
+  operator[]=(String key, v) => _setVariable(key, v);
   Collection get parent => _parent;
 }

@@ -3,6 +3,7 @@ library activerecord;
 import 'dart:mirrors';
 import 'dart:async';
 import 'dart:collection' show LinkedHashSet;
+import 'dart:convert' show JSON;
 
 import 'package:postgresql/postgresql.dart';
 

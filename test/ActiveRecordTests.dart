@@ -4,8 +4,8 @@ import 'dart:io';
 
 class Person extends Collection {
   get variables => [
-    new Variable("name", VariableType.STRING, [], [new Length(max: 50, min: 2)]),
-    new Variable("age", VariableType.INT)
+    new Variable("name", validations: [new Length(max: 50, min: 2)]),
+    new Variable("age", type: VariableType.INT)
   ];
   void say(Model m, String msg) {
     print(getSayText(m, msg));
@@ -72,7 +72,7 @@ main(List<String> arguments) {
   
   test("Test sql statement generation", () {
     var adapter = new PostgresAdapter(dbUri);
-    var variable = new Variable("mynum", VariableType.STRING, [Constraint.NOT_NULL]);
+    var variable = new Variable("mynum", constrs: [Constraint.NOT_NULL]);
     var schema = new Schema("MyTable", [Variable.ID_FIELD, variable]);
     expect(adapter.getPostgresType(variable.type),
         equals("varchar(255)"));
@@ -109,6 +109,9 @@ main(List<String> arguments) {
         equals("Fred wants to say 'Hello' in a normal mood"));
     expect(p.getSayText("Hello", mood: "angry"), 
         equals("Fred wants to say 'Hello' in a angry mood"));
+    p.name = "NewName";
+    expect(p["name"], equals("NewName"));
+    expect(p.name, equals("NewName"));
   });
   
   test("Test dirty and need to persisted management", () {
