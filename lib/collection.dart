@@ -43,32 +43,70 @@ abstract class Collection {
     return new Future.error("Model was not persisted --> cannot destroy model");
   }
   
+  Future<Model> create(Model m) {
+    var completer = new Completer<Model>();
+    validate(m, Validation.ON_CREATE_FLAG).then((bool valRes) {
+      if (valRes) {
+        this.beforeCreate(m);
+        m["updated_at"] = new DateTime.now();
+        m["created_at"] = new DateTime.now();
+        _adapter.saveModel(schema, m).then((created) {
+          created._setClean();
+          this.afterCreate(created);
+          completer.complete(created);
+        }).catchError((e) => completer.completeError(e));
+      } else {
+        completer.completeError("Model validation failed");
+      }
+    }).catchError((e) => completer.completeError(e));
+    return completer.future;
+  }
+  
+  Future<Model> update(Model m) {
+    var completer = new Completer<Model>();
+    validate(m, Validation.ON_CREATE_FLAG).then((bool valRes) {
+      if (valRes) {
+        this.beforeUpdate(m);
+        m["updated_at"] = new DateTime.now();
+        _adapter.saveModel(schema, m).then((updated) {
+          updated._setClean();
+          this.afterUpdate(updated);
+          completer.complete(updated);
+        }).catchError((e) => completer.completeError(e));
+      } else {
+        completer.completeError("Model Validation failed");
+      }
+    }).catchError((e) => completer.completeError(e));
+    return completer.future;
+  }
+  
   Future<Model> save(Model m) {
     if (m._needsToBePersisted) {
-      m["updated_at"] = new DateTime.now();
-      Future<Model> f;
-      var completer = new Completer<Model>();
-      var wasPersistedBefore = m.isPersisted;
-      if (m.isPersisted) {
-        this.beforeUpdate(m);
-        f = _adapter.updateModel(schema, m);
-      } else {
-        m["created_at"] = new DateTime.now();
-        this.beforeCreate(m);
-        f = _adapter.saveModel(schema, m);
-      }
-      f.then((saved) {
-        saved._setClean();
-        wasPersistedBefore ? 
-            this.afterUpdate(saved) : this.afterCreate(saved);
-        completer.complete(saved);
-      }).catchError((err) {
-        completer.completeError(err);
-      });
-      return completer.future;
+      if(m.isPersisted) return update(m);
+      else return create(m);
     }
     return new Future.value(m);
   }
+  
+  Future<bool> validate(Model m, int flag) {
+    var completer = new Completer<bool>();
+    if (m.parent != this) return new Future.error("Not same parent");
+    var validationResults = new List<Future<bool>>();
+    schema.variables.forEach((v) {
+      v.validations.forEach((Validation validation) {
+        validationResults.add(validation.validate(v, m, m[v.name], flag));
+      });
+    });
+    Future.wait(validationResults).then((List<bool> results) {
+      bool result = true;
+      for (bool res in results) {
+        result = result && res;
+      }
+      return completer.complete(result);
+    }).catchError((e) => completer.completeError(e));
+    return completer.future;
+  }
+  
   Future<Model> find(int id) {
     var completer = new Completer<Model>();
     where("id = ?", [id], limit: 1).then((List<Model> models) {

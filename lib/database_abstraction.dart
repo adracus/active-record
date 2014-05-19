@@ -51,9 +51,10 @@ class Variable {
   final String name;
   final VariableType type;
   final LinkedHashSet<Constraint> _constraints;
+  final List<Validation> validations;
   
-  
-  Variable(this.name, [this.type = VariableType.STRING, List<Constraint> constrs]) 
+  Variable(this.name, [this.type = VariableType.STRING, 
+     List<Constraint> constrs = const[],  this.validations = const[]]) 
       : _constraints = _constraintListToSet(constrs);
   
   static LinkedHashSet<Constraint> _constraintListToSet(List<Constraint> constrs)

@@ -40,7 +40,7 @@ class Person extends Collection {
     new Variable("name"),
     new Variable("age", VariableType.NUMBER)
   ];
-  get adapter => new MemoryAdapter();
+  get adapter => new PostgresAdapter(/* your uri here*/);
   void say(Model m, String msg) => print("${m["name"]} says: '$msg'");
 }
 ```
@@ -76,6 +76,27 @@ did not specify an id, the id will automatically be incremented by the adapter. 
 ```dart
 myPerson.save().then((Model savedMyPerson) // Do something with the saved person
 ```
+##### Validations
+Validations have been built in since version 0.2.0. Validations happen in Active record itself.
+Validations have to be defined when defining the variables of a Model, like so:
+
+```dart
+get variables => [
+  new Variable("name", VariableType.STRING, [], [new Length(max: 50, min: 2)]),
+  new Variable("age", VariableType.INT)
+];
+```
+Here, the validation `Length` is used. Other available validations are:
+  + Presence
+  + Absence
+  + Unique
+  + Custom (implement an own method validating the model here)
+
+Validations have three possibilities of triggering: On save, on create and on update. To specify
+this, fill in the optional named parameter triggers with constants from the Validations class.
+Expect the syntax of defining variables, their type and their constraints to change
+soon, in a more effective and less time consuming way.
+
 #### Finding models by id
 To find models, call the `find(int id)` method on a collection instance. This returns a Future containing the Model and will throw an error
 if the specified Model does not exist:

@@ -4,7 +4,7 @@ import 'dart:io';
 
 class Person extends Collection {
   get variables => [
-    new Variable("name"),
+    new Variable("name", VariableType.STRING, [], [new Length(max: 50, min: 2)]),
     new Variable("age", VariableType.INT)
   ];
   void say(Model m, String msg) {
@@ -104,9 +104,6 @@ main(List<String> arguments) {
   
   test("Test collection reflection", () {
     var p = person.nu;
-    p.save().then((res) {
-      expect(res, isNotNull);
-    });
     p["name"] = "Fred";
     expect(p.getSayText("Hello"),
         equals("Fred wants to say 'Hello' in a normal mood"));
@@ -163,5 +160,12 @@ main(List<String> arguments) {
     person.all(limit: 10).then((List<Model> models) {
       expect(models.length, equals(10));
     });
+  });
+  
+  test("Test validations", () {
+    var p = person.nu;
+    p["name"] = "w";
+    p.save().catchError((e) 
+      => expect(e, isNotNull));
   });
 }

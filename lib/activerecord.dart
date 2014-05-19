@@ -11,6 +11,7 @@ part 'postgres_adapter.dart';
 part 'database_abstraction.dart';
 part 'model.dart';
 part 'collection.dart';
+part 'validations.dart';
 
 var defaultAdapter = null;
 
