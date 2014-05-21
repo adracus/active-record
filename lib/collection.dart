@@ -12,7 +12,9 @@ abstract class Collection {
   Schema _schema;
   
   Collection() {
-    var vars = Variable.MODEL_STUBS..addAll(variables);
+    var vars = Variable.MODEL_STUBS
+    ..addAll(variables);
+    print(belongsTo);
     _schema = new Schema(this._tableName, vars);
     _adapter = this.adapter;
     _adapter.createTable(_schema);
@@ -134,6 +136,8 @@ abstract class Collection {
     return completer.future;
   }
   
+  List<Relation> get belongsTo => [];
+  List<Relation> get hasMany => [];
   BeforeCreateFunc get beforeCreate => (Model m){};
   AfterCreateFunc get afterCreate => (Model m){};
   BeforeUpdateFunc get beforeUpdate => (Model m){};

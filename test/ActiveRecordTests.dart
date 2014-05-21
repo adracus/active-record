@@ -7,6 +7,19 @@ class Person extends Collection {
     new Variable("name", validations: [new Length(max: 50, min: 2)]),
     new Variable("age", type: VariableType.INT)
   ];
+  
+  get belongsTo {
+    var res = [];
+    var r;
+    try {
+      r = new Relation(PostgresModel);
+    } catch (e) {
+      print(e);
+    }
+    res.add(r);
+    return res;
+  }
+  
   void say(Model m, String msg) {
     print(getSayText(m, msg));
   }
@@ -20,6 +33,7 @@ class PostgresModel extends Collection {
   get variables => [
     new Variable("name")
   ];
+  get hasMany => [new Relation(Person)];
 }
 
 main(List<String> arguments) {
@@ -30,6 +44,7 @@ main(List<String> arguments) {
   
   test("Test model generation", () {
     var empty = person.nu;
+    print(person.belongsTo);
     empty["id"] = 1;
     empty["name"] = "Mark";
     empty["age"] = 16;
@@ -170,5 +185,10 @@ main(List<String> arguments) {
     p["name"] = "w";
     p.save().catchError((e) 
       => expect(e, isNotNull));
+  });
+  
+  test("Test relation generation", () {
+    var r = new Relation(PostgresModel);
+    expect(r.name, equals("PostgresModel_id"));
   });
 }

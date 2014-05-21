@@ -64,6 +64,25 @@ class Variable {
   List<Constraint> get constraints => new List.from(_constraints);
 }
 
+class Relation extends Variable{
+  final Type t;
+  Relation(Type t, {List<Constraint> constrs : const[],
+    List<Validation> validations : const[]}) : this.t = t,
+      super(getName(t) + "_id", type:VariableType.INT, 
+          constrs: getConstraints(t, constrs), validations: validations);
+  
+  static List<Constraint> getConstraints(Type t, List<Constraint> cs) {
+    var schema = getRelatedCollection(t).schema;
+    var result = new List<Constraint>();
+    return result..add(new ForeignKey("id", schema.tableName))..addAll(cs);
+  }
+  
+  static Collection getRelatedCollection(Type t)
+    => reflectClass(t).newInstance(new Symbol(''), []).reflectee;
+  static String getName(Type t)
+    => getRelatedCollection(t).schema.tableName;
+}
+
 class VariableType {
   static const STRING = const VariableType._(0, "String");
   static const INT = const VariableType._(1, "Integer", numerical: true);
@@ -86,7 +105,13 @@ class Constraint {
   static const PRIMARY_KEY = const Constraint._("PRIMARY KEY");
   static const AUTO_INCREMENT = const Constraint._("AUTO INCREMENT");
   final String name;
-  
+  Constraint(this.name);
   const Constraint._(this.name);
   toString() => name;
+}
+
+class ForeignKey extends Constraint{
+  final String keyName;
+  final String tableName;
+  ForeignKey(this.keyName, this.tableName) : super("FOREIGN KEY");
 }
