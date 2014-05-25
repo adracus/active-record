@@ -1,5 +1,6 @@
 import 'package:activerecord/activerecord.dart';
 import 'package:unittest/unittest.dart';
+import 'dart:async';
 import 'dart:io';
 
 class Person extends Collection {
@@ -8,17 +9,7 @@ class Person extends Collection {
     new Variable("age", type: VariableType.INT)
   ];
   
-  get belongsTo {
-    var res = [];
-    var r;
-    try {
-      r = new Relation(PostgresModel);
-    } catch (e) {
-      print(e);
-    }
-    res.add(r);
-    return res;
-  }
+  get belongsTo => [new Relation(PostgresModel, Person)];
   
   void say(Model m, String msg) {
     print(getSayText(m, msg));
@@ -33,7 +24,9 @@ class PostgresModel extends Collection {
   get variables => [
     new Variable("name")
   ];
-  get hasMany => [new Relation(Person)];
+  
+  get hasMany => [new Relation(Person, PostgresModel)];
+  get belongsTo => [];
 }
 
 main(List<String> arguments) {
@@ -41,154 +34,153 @@ main(List<String> arguments) {
   if (dbUri!= null) defaultAdapter = new PostgresAdapter(dbUri);
   var person = new Person();
   var postgresModel = new PostgresModel();
-  
-  test("Test model generation", () {
-    var empty = person.nu;
-    print(person.belongsTo);
-    empty["id"] = 1;
-    empty["name"] = "Mark";
-    empty["age"] = 16;
-    expect(empty.parent, equals(person));
-    expect(empty.parent.schema.tableName, equals("Person"));
-    expect(empty["id"], equals(1));
-    expect(empty["name"], equals("Mark"));
-    expect(empty["age"], equals(16));
-  });
-  
-  test("Test model persistance", () {
-    var empty = person.nu;
-    empty["id"] = 1;
-    empty["name"] = "Mark";
-    empty["age"] = 16;
-    empty.save().then((arg) {
-      expect(arg, isNotNull);
-      person.find(1).then((mark) {
-        expect(mark["id"], equals(1));
-        expect(mark["name"], equals("Mark"));
-        expect(mark["age"], equals(16));
+  Future.wait([person.init(), postgresModel.init()]).then((res) {
+    test("Test model generation", () {
+        var empty = person.nu;
+        empty["id"] = 1;
+        empty["name"] = "Mark";
+        empty["age"] = 16;
+        expect(empty.parent, equals(person));
+        expect(empty.parent.schema.tableName, equals("Person"));
+        expect(empty["id"], equals(1));
+        expect(empty["name"], equals("Mark"));
+        expect(empty["age"], equals(16));
+        var myPerson = person.nu;
+        myPerson.name = "Maurice";
+        myPerson.age = 21;
+        myPerson.save().then((savedMaurice) {
+          print(savedMaurice);
+        });
       });
-    });
-  });
-  
-  test("Auto increment function", () {
-    var one = person.nu;
-    var two = person.nu;
-    one["name"] = "One";
-    two["name"] = "Two";
-    one["age"] = "111";
-    two["age"] = "222";
-    one.save().then((_) => two.save())
-    .then((_) {
-      person.find(1).then((res) {
-        expect(res["id"], equals(1));
+      
+      test("Auto increment function", () {
+        var one = person.nu;
+        var two = person.nu;
+        one["name"] = "One";
+        two["name"] = "Two";
+        one["age"] = "111";
+        two["age"] = "222";
+        one.save().then((_) => two.save())
+        .then((_) {
+          person.find(1).then(expectAsync((res) {
+            expect(res["id"], isNotNull);
+          }));
+        });
       });
-    });
-  });
-  
-  test("Test sql statement generation", () {
-    var adapter = new PostgresAdapter(dbUri);
-    var variable = new Variable("mynum", constrs: [Constraint.NOT_NULL]);
-    var schema = new Schema("MyTable", [Variable.ID_FIELD, variable]);
-    expect(adapter.getPostgresType(variable.type),
-        equals("varchar(255)"));
-    expect(adapter.getVariableForCreate(variable),
-        equals("mynum varchar(255) NOT NULL"));
-    expect(adapter.getVariableForCreate(Variable.ID_FIELD),
-        equals("id serial PRIMARY KEY"));
-    expect(adapter.buildCreateTableStatement(schema),
-        equals("CREATE TABLE IF NOT EXISTS MyTable ("
-            + "id serial PRIMARY KEY,"
-            + "mynum varchar(255) NOT NULL);"));
-    if (dbUri != null) {
-      adapter.createTable(schema).then((val) {
-        expect(val, equals(true));
+      
+      test("Test model persistance on postgres", () {
+        if (dbUri != null) {
+          var m = postgresModel.nu;
+          m["name"] = "A new user";
+          m.save().then(expectAsync((mo) {
+            expect(mo, isNotNull);
+            expect(mo.id, isNotNull);
+            expect(mo["name"], "A new user");
+          }));
+        }
       });
-    }
-  });
-  
-  test("Test model persistance on postgres", () {
-    if (dbUri != null) {
-      var m = postgresModel.nu;
-      m["name"] = "A new user";
-      m.save().then((mo) {
-        expect(mo, isNotNull);
-        expect(mo["name"], "User");
+      
+      test("Test collection reflection", () {
+        var p = person.nu;
+        p["name"] = "Fred";
+        expect(p.getSayText("Hello"),
+            equals("Fred wants to say 'Hello' in a normal mood"));
+        expect(p.getSayText("Hello", mood: "angry"), 
+            equals("Fred wants to say 'Hello' in a angry mood"));
+        p.name = "NewName";
+        expect(p["name"], equals("NewName"));
+        expect(p.name, equals("NewName"));
       });
-    }
-  });
-  
-  test("Test collection reflection", () {
-    var p = person.nu;
-    p["name"] = "Fred";
-    expect(p.getSayText("Hello"),
-        equals("Fred wants to say 'Hello' in a normal mood"));
-    expect(p.getSayText("Hello", mood: "angry"), 
-        equals("Fred wants to say 'Hello' in a angry mood"));
-    p.name = "NewName";
-    expect(p["name"], equals("NewName"));
-    expect(p.name, equals("NewName"));
-  });
-  
-  test("Test dirty and need to persisted management", () {
-    var p = person.nu;
-    expect(p.isDirty, isFalse);
-    expect(p.isPersisted, isFalse);
-    p["name"] = "NewName";
-    expect(p.isDirty, isTrue);
-    p.save().then((pThen) {
-      expect(pThen.isDirty, isFalse);
-      expect(pThen.isPersisted, isTrue);
-      pThen["name"] = "IhatedMyOldName";
-      expect(pThen.isDirty, isTrue);
-      pThen.save().then((pThenThen) {
-        expect(pThenThen.isPersisted, isTrue);
-        expect(pThenThen.isDirty, isFalse);
+      
+      test("Test dirty and need to persisted management", () {
+        var p = person.nu;
+        expect(p.isDirty, isFalse);
+        expect(p.isPersisted, isFalse);
+        p["name"] = "NewName";
+        expect(p.isDirty, isTrue);
+        p.save().then(expectAsync((pThen) {
+          expect(pThen.isDirty, isFalse);
+          expect(pThen.isPersisted, isTrue);
+          pThen["name"] = "IhatedMyOldName";
+          expect(pThen.isDirty, isTrue);
+          pThen.save().then(expectAsync((pThenThen) {
+            expect(pThenThen.isPersisted, isTrue);
+            expect(pThenThen.isDirty, isFalse);
+          }));
+        }));
       });
-    });
-  });
-  
-  test("Test findModelWhere", () {
-    var test = person.nu;
-    test["name"] = "IhatedMyOldName";
-    test["age"] = 300;
-    test.save().then((saved) {
-      expect(saved, isNotNull);
-      person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
-      then((List<Model> models) {
-        var model = models[0];
-        expect(model["age"], greaterThanOrEqualTo(30));
-        expect(model["name"], equals("IhatedMyOldName"));
+      
+      test("Test findModelWhere", () {
+        var test = person.nu;
+        test["name"] = "IhatedMyOldName";
+        test["age"] = 300;
+        test.save().then(expectAsync((saved) {
+          expect(saved, isNotNull);
+          person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
+          then(expectAsync((List<Model> models) {
+            var model = models[0];
+            expect(model["age"], greaterThanOrEqualTo(30));
+            expect(model["name"], equals("IhatedMyOldName"));
+          }));
+        }));
       });
-    }).catchError((e) => print(e));
-  });
-  
-  test("Test model destroy", () {
-    person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
-    then((List<Model> models) {
-      var model = models[0];
-      expect(model["age"], greaterThanOrEqualTo(30));
-      expect(model["name"], equals("IhatedMyOldName"));
-      model.destroy().then((val) {
-        expect(val, isTrue);
+      
+      test("Test model destroy", () {
+        person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
+        then(expectAsync((List<Model> models) {
+          var model = models[0];
+          expect(model["age"], greaterThanOrEqualTo(30));
+          expect(model["name"], equals("IhatedMyOldName"));
+          model.destroy().then(expectAsync((val) {
+            expect(val, isTrue);
+          }));
+        }));
       });
-    });
-  });
-  
-  test("Test limit, model all", () {
-    person.all(limit: 10).then((List<Model> models) {
-      expect(models.length, equals(10));
-    });
-  });
-  
-  test("Test validations", () {
-    var p = person.nu;
-    p["name"] = "w";
-    p.save().catchError((e) 
-      => expect(e, isNotNull));
-  });
-  
-  test("Test relation generation", () {
-    var r = new Relation(PostgresModel);
-    expect(r.name, equals("PostgresModel_id"));
+      
+      test("Test limit, model all", () {
+        var psaves = [];
+        for (int i = 0; i < 12; i++) {
+          psaves.add(person.nu..name = "person$i");
+        }
+        var futures = [];
+        psaves.forEach((p) => futures.add(p.save()));
+        Future.wait(futures).then(expectAsync((vals) {
+          person.all(limit: 10).then(expectAsync((List<Model> models) {
+            expect(models.length, equals(10));
+          }));
+        }));
+      });
+      
+      test("Test validations", () {
+        var p = person.nu;
+        p["name"] = "w";
+        p.save().catchError(expectAsync((e) {
+          expect(e, isNotNull);
+        }));
+      });
+      
+      test("Test relation generation", () {
+        var r = new Relation(PostgresModel, Person);
+        expect(r.variableOnHolder.name, equals("postgresmodel_id"));
+        expect(r.variableOnTarget.name, equals("person_id"));
+        var p = person.nu;
+        var pm = postgresModel.nu;
+        pm.save().then(expectAsync((Model pmSaved) {
+          p["postgresmodel_id"] = pm;
+          pmSaved.persons.then(expectAsync((BelongsToManager ms) {
+            expect(ms, isNotNull);
+            expect(ms.length, isZero);
+            var aPersonModel = ms.nu;
+            expect(aPersonModel.parent.runtimeType, equals(Person));
+            expect(aPersonModel["postgresmodel_id"], equals(pmSaved.id));
+            aPersonModel.name = "aName";
+            aPersonModel.save().then(expectAsync((aPersonSaved) {
+              aPersonSaved.postgresmodel.then(expectAsync((pgmd) {
+                expect(pgmd.id, equals(pm.id));
+              }));
+            }));
+          }));
+        }));
+      });
   });
 }

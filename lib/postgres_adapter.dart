@@ -6,74 +6,56 @@ class PostgresAdapter implements DatabaseAdapter {
   PostgresAdapter(this._uri);
   
   Future<bool> createTable(Schema schema) {
-    var completer = new Completer();
-    connect(_uri).then((conn) {
-      conn.execute(buildCreateTableStatement(schema)).then((_) {
-        completer.complete(true);
+    return connect(_uri).then((conn) {
+      return conn.execute(buildCreateTableStatement(schema)).then((_) {
+        return true;
       }).catchError((e) {
-        completer.complete(false);
+        return false;
       }).whenComplete(() {
         conn.close();
       });
-    }).catchError((e) {
-      completer.complete(false);
     });
-    return completer.future;
   }
   
   Future<bool> destroyModel(Model m) {
-    var completer = new Completer();
-    connect(_uri).then((conn) {
+    return connect(_uri).then((conn) {
       var s = buildDestroyModelStatement(m);
-      conn.execute(s.sql, s.values).then((_)
-        => completer.complete(true)).catchError((e)
-        => completer.completeError(e)).whenComplete(()
+      return conn.execute(s.sql, s.values).then((_)
+        => true).whenComplete(()
         => conn.close());
     });
-    return completer.future;
   }
   
   Future<Model> saveModel(Schema schema, Model m) {
-    var completer = new Completer();
-    connect(_uri).then((conn) {
+    return connect(_uri).then((conn) {
       var s = buildSaveModelStatement(m);
-      conn.query(s.sql, s.values).toList().then((rows) {
+      return conn.query(s.sql, s.values).toList().then((rows) {
         rows.forEach((row) => updateModelWithRow(row, m));
-        completer.complete(m);
-      }).catchError((e) => completer.completeError(e))
-        .whenComplete(() => conn.close());
-    }).catchError((e) => completer.completeError(e));
-    return completer.future;
+        return m;
+      }).whenComplete(() => conn.close());
+    });
   }
   
   Future<Model> updateModel(Schema schema, Model m) {
-    var completer = new Completer();
-    connect(_uri).then((conn) {
+    return connect(_uri).then((conn) {
       var s = buildUpdateModelStatement(m);
-      conn.execute(s.sql, s.values).then((_) {
-        completer.complete(m);
-      }).catchError((e) => completer.completeError(e))
-        .whenComplete(() => conn.close());
-    }).catchError((e) => completer.completeError(e));
-    return completer.future;
+      return conn.execute(s.sql, s.values).then((_) {
+        return m;
+      }).whenComplete(() => conn.close());
+    });
   }
   
   Future<List<Model>> modelsWhere(Collection c, String sql, List params, int limit, int offset) {
-    var completer = new Completer();
-    connect(_uri).then((conn) {
+    return connect(_uri).then((conn) {
       Statement s = buildSelectModelStatement(c.schema, sql, params, limit, offset);
-      conn.query(s.sql, s.values).toList()
+      return conn.query(s.sql, s.values).toList()
       .then((rows) {
         var models = [];
         rows.forEach((row) => models.add(updateModelWithRow(row, c.nu)));
         return models;
       })
-      .then((models) 
-          => completer.complete(models))
-      .catchError((e) => completer.completeError(e))
       .whenComplete(() => conn.close());
-    }).catchError((e) => completer.completeError(e));
-    return completer.future;
+    });
   }
   
   Model updateModelWithRow(r, Model empty) {
@@ -115,7 +97,8 @@ class PostgresAdapter implements DatabaseAdapter {
   String buildCreateTableStatement(Schema schema) {
     var lst = [];
     schema.variables.forEach((v) => lst.add(getVariableForCreate(v)));
-    return "CREATE TABLE IF NOT EXISTS ${schema.tableName} (${lst.join(',')});";
+    var st = "CREATE TABLE IF NOT EXISTS ${schema.tableName} (${lst.join(',')});";
+    return st;
   }
   
   Statement buildUpdateModelStatement(Model m) {
@@ -143,9 +126,10 @@ class PostgresAdapter implements DatabaseAdapter {
         s.addValue("param${i+1}", args[i]);
       }
     }
+    stmnt += replacePlaceholders(sql) + " ";
     if (limit != null) stmnt += "LIMIT $limit ";
     if (offset != null) stmnt += "OFFSET $offset";
-    s.sql = stmnt + replacePlaceholders(sql) + ";";
+    s.sql = stmnt + ";";
     return s;
   }
   

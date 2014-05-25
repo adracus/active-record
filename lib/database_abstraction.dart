@@ -20,7 +20,9 @@ class Schema {
   Schema(this._tableName, List<Variable> vars) {
     vars.forEach((v) => _variables[v.name] = v);
   }
-  
+  Variable getProperty(String name) {
+    return _variables[name];
+  }
   bool hasProperty(String name) {
     return _variables.keys.contains(name);
   }
@@ -41,46 +43,26 @@ class Schema {
 }
 
 class Variable {
-  static var ID_FIELD = new Variable("id", type: VariableType.INT,
-      constrs: [Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT]);
-  static var CREATED_AT = new Variable("created_at", type: VariableType.DATETIME,
-      constrs: [Constraint.NOT_NULL]);
-  static var UPDATED_AT = new Variable("updated_at", type: VariableType.DATETIME,
-      constrs: [Constraint.NOT_NULL]);
-  static var MODEL_STUBS = [ID_FIELD, CREATED_AT, UPDATED_AT];
+  static const ID_FIELD = const Variable._("id", type: VariableType.INT,
+      constrs: const[Constraint.PRIMARY_KEY, Constraint.AUTO_INCREMENT]);
+  static const CREATED_AT = const Variable._("created_at", type: VariableType.DATETIME,
+      constrs: const[Constraint.NOT_NULL]);
+  static const UPDATED_AT = const Variable._("updated_at", type: VariableType.DATETIME,
+      constrs: const[Constraint.NOT_NULL]);
+  static const MODEL_STUBS = const[ID_FIELD, CREATED_AT, UPDATED_AT];
   final String name;
   final VariableType type;
-  final LinkedHashSet<Constraint> _constraints;
+  final List<Constraint> constrs;
   final List<Validation> validations;
   
   Variable(this.name, {this.type: VariableType.STRING, 
-     List<Constraint> constrs: const[],  this.validations: const[]}) 
-      : _constraints = _constraintListToSet(constrs);
+     this.constrs: const[], this.validations: const[]});
   
-  static LinkedHashSet<Constraint> _constraintListToSet(List<Constraint> constrs)
-    => constrs == null? new LinkedHashSet() : new LinkedHashSet.from(constrs);
+  const Variable._(this.name, {this.type: VariableType.STRING, 
+    this.constrs: const[], this.validations: const[]});
   
   toString() => "$name: $type";
-  List<Constraint> get constraints => new List.from(_constraints);
-}
-
-class Relation extends Variable{
-  final Type t;
-  Relation(Type t, {List<Constraint> constrs : const[],
-    List<Validation> validations : const[]}) : this.t = t,
-      super(getName(t) + "_id", type:VariableType.INT, 
-          constrs: getConstraints(t, constrs), validations: validations);
-  
-  static List<Constraint> getConstraints(Type t, List<Constraint> cs) {
-    var schema = getRelatedCollection(t).schema;
-    var result = new List<Constraint>();
-    return result..add(new ForeignKey("id", schema.tableName))..addAll(cs);
-  }
-  
-  static Collection getRelatedCollection(Type t)
-    => reflectClass(t).newInstance(new Symbol(''), []).reflectee;
-  static String getName(Type t)
-    => getRelatedCollection(t).schema.tableName;
+  List<Constraint> get constraints => this.constrs.toSet().toList();
 }
 
 class VariableType {
@@ -108,10 +90,4 @@ class Constraint {
   Constraint(this.name);
   const Constraint._(this.name);
   toString() => name;
-}
-
-class ForeignKey extends Constraint{
-  final String keyName;
-  final String tableName;
-  ForeignKey(this.keyName, this.tableName) : super("FOREIGN KEY");
 }

@@ -9,38 +9,92 @@ abstract class DynObject<T> {
 }
 
 @proxy
-class Model extends Object with DynObject<dynamic> {
+abstract class Model {
+  bool get isDirty;
+  bool get isPersisted;
+  bool get needsToBePersisted;
+  void setClean();
+  noSuchMethod(Invocation invocation);
+  Future<Model> save();
+  Future<bool> destroy();
+  Collection get parent;
+  operator[](String key);
+  operator[]=(String key, v);
+  forEach(f(String key, v));
+}
+
+@proxy
+class _Model extends Object with DynObject<dynamic> implements Model{
   final Collection _parent;
   
   bool _isDirty = false;
   bool _isPersisted = false;
   
-  Model(this._parent);
+  _Model(this._parent);
   
   Future<Model> save() => _parent.save(this);
   Future<bool> destroy() => _parent.destroy(this);
   bool get isDirty => _isDirty;
   bool get isPersisted => _isPersisted;
-  bool get _needsToBePersisted => (_isDirty || !_isPersisted);
+  bool get needsToBePersisted => (_isDirty || !_isPersisted);
   
-  void _setClean() {
+  void setClean() {
     this._isDirty = false;
     this._isPersisted = true;
   }
   
+  bool _isBelongsToRelationGetter(String name)
+    => this.parent.belongsTo.map((e) => e.name.toLowerCase()).contains(name);
+  
+  bool _isHasManyRelationGetter(String name)
+    => this.parent.hasMany.map((Relation e) => e.name.toLowerCase()+"s").contains(name);
+  
+  Relation _getHasManyRelation(String name) {
+    return this.parent.hasMany.firstWhere((r) => r.name + "s" == name);
+  }
+  
+  Relation _getBelongsToRelation(String name) {
+    return this.parent.belongsTo.firstWhere((r) => r.name == name);
+  }
+  
+  bool _isRelationGetter(String name)
+    => _isHasManyRelationGetter(name) || _isBelongsToRelationGetter(name);
+  
+  Future _doRelationReturn(Invocation invocation) {
+    var name = MirrorSystem.getName(invocation.memberName);
+    if (_isHasManyRelationGetter(name)) {
+      var r = _getHasManyRelation(name);
+      var col = r.targetCollection;
+      return col.where(r.variableOnTarget.name +" =?", [this.id]).then((List<Model> ms) {
+        return new BelongsToManager(this, ms, r, this.parent);
+      });
+    }
+    if (_isBelongsToRelationGetter(name)) {
+      var r = _getBelongsToRelation(name);
+      var col = r.targetCollection;
+      return col.find(this[r.variableOnHolder.name]).then((m) {
+        return new HasManyManager(this, m, r, this.parent);
+      });
+    }
+    return new Future.error("Relation method not supported");
+  }
+  
   noSuchMethod(Invocation invocation) {
-    if (invocation.isMethod) return routeToParentMethod(invocation);
+    if (invocation.isMethod) return _routeToParentMethod(invocation);
     if (invocation.isGetter) {
+      if (_isRelationGetter(MirrorSystem.getName(invocation.memberName))) {
+        return _doRelationReturn(invocation);
+      }
       return _vars[MirrorSystem.getName(invocation.memberName)];
     }
     if (invocation.isSetter) {
       var key = MirrorSystem.getName(invocation.memberName);
       key = key.substring(0, key.length -1);
-      _setVariable(key, invocation.positionalArguments[0]);
+      setVariable(key, invocation.positionalArguments[0]);
     }
   }
   
-  routeToParentMethod(Invocation invocation) {
+  _routeToParentMethod(Invocation invocation) {
     var s = null;
     var posArgs;
     var namedArgs;
@@ -60,15 +114,15 @@ class Model extends Object with DynObject<dynamic> {
   
   String toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
   
-  _setVariable(String key, v) {
+  setVariable(String key, v) {
     if (this._parent.schema.hasProperty(key)) {
-      super[key] = v;
+        super[key] = v;
       this._isDirty = true;
     } else {
       throw new ArgumentError("${_parent.schema.tableName} does not have property $key");
     }
   }
   
-  operator[]=(String key, v) => _setVariable(key, v);
+  operator[]=(String key, v) => setVariable(key, v);
   Collection get parent => _parent;
 }
