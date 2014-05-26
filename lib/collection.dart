@@ -135,8 +135,17 @@ abstract class Collection {
     args.forEach((arg) 
       => (arg is Variable) ? result.add(arg) : 
          (arg is String) ? result.add(new Variable(arg)) :
+         (arg is List) ? result.add(variableFromList((arg as List))):
          throw new UnsupportedError("Unsupported Variable"));
     return result;
+  }
+  
+  Variable variableFromList(List args) {
+    var name = args[0];
+    var type = args.length > 1 ? new VariableType.fromString(args[1]) : VariableType.STRING;
+    var constraints = args.length > 2 ? args[2] : [];
+    var validations = args.length > 3 ? args[3] : [];
+    return new Variable(name, type: type, constrs: constraints, validations: validations);
   }
   
   List<Relation> parseRelations(List args) {

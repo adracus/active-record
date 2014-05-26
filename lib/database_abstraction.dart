@@ -72,12 +72,19 @@ class VariableType {
   static const BOOL = const VariableType._(3, "Bool");
   static const TEXT = const VariableType._(4, "Text");
   static const DATETIME = const VariableType._(5, "Datetime");
+  static const List<Variable> TYPES = const [STRING, INT, DOUBLE, BOOL, TEXT, DATETIME];
   
   final int value;
   final bool numerical;
   final String name;
   
   const VariableType._(this.value, this.name, {this.numerical : false});
+  factory VariableType.fromString(String arg) {
+    for (var type in TYPES) {
+      if (type.name == arg) return type;
+    }
+    throw("Type not found");
+  }
   toString() => name;
 }
 

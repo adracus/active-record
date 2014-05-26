@@ -5,8 +5,8 @@ import 'dart:io';
 
 class Person extends Collection {
   get variables => [
-    new Variable("name", validations: [new Length(max: 50, min: 2)]),
-    new Variable("age", type: VariableType.INT)
+    ["name", "String", [], [new Length(max: 50, min: 2)]],
+    ["age", "Integer"]
   ];
   
   get belongsTo => [PostgresModel];
