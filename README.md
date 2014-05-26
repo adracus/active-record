@@ -45,12 +45,12 @@ class Person extends Collection {
 }
 ```
 Lifecycle methods are also available:
-  + beforeCreate(Model m)
-  + afterCreate(Model m)
-  + beforeUpdate(Model m)
-  + afterUpdate(Model m)
-  + beforeDestroy(Model m)
-  + afterDestroy()
+* beforeCreate(Model m)
+* afterCreate(Model m)
+* beforeUpdate(Model m)
+* afterUpdate(Model m)
+* beforeDestroy(Model m)
+* afterDestroy()
 
 ##### Define instance methods of Models
 To define an instance method of a Model, you don't need to modify the Model class (since every instance of every Collection will be a Model).
@@ -87,10 +87,10 @@ get variables => [
 ];
 ```
 Here, the validation `Length` is used. Other available validations are:
-  + Presence
-  + Absence
-  + Unique
-  + Custom (implement an own method validating the model here)
+* Presence
+* Absence
+* Unique
+* Custom (implement an own method validating the model here)
 
 Validations have three possibilities of triggering: On save, on create and on update. To specify
 this, fill in the optional named parameter triggers with constants from the Validations class.
@@ -152,6 +152,4 @@ postgresmodel.find(1).then((Model postgresModel) {
     });
   });
 });
-```
-}
 ```
