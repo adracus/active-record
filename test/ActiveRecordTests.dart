@@ -45,12 +45,6 @@ main(List<String> arguments) {
         expect(empty["id"], equals(1));
         expect(empty["name"], equals("Mark"));
         expect(empty["age"], equals(16));
-        var myPerson = person.nu;
-        myPerson.name = "Maurice";
-        myPerson.age = 21;
-        myPerson.save().then((savedMaurice) {
-          print(savedMaurice);
-        });
       });
       
       test("Auto increment function", () {
@@ -166,18 +160,15 @@ main(List<String> arguments) {
         var p = person.nu;
         var pm = postgresModel.nu;
         pm.save().then(expectAsync((Model pmSaved) {
-          p["postgresmodel_id"] = pm;
-          pmSaved.persons.then(expectAsync((BelongsToManager ms) {
-            expect(ms, isNotNull);
-            expect(ms.length, isZero);
-            var aPersonModel = ms.nu;
-            expect(aPersonModel.parent.runtimeType, equals(Person));
-            expect(aPersonModel["postgresmodel_id"], equals(pmSaved.id));
-            aPersonModel.name = "aName";
-            aPersonModel.save().then(expectAsync((aPersonSaved) {
-              aPersonSaved.postgresmodel.then(expectAsync((pgmd) {
-                expect(pgmd.id, equals(pm.id));
-              }));
+          var p1Rel = pmSaved.persons.nu;
+          var p2Rel = pmSaved.persons.nu;
+          p1Rel.name = "Person1Rel";
+          p2Rel.name = "Person2Rel";
+          var fs = [];
+          fs..add(p1Rel.save())..add(p2Rel.save());
+          Future.wait(fs).then(expectAsync((saveds) {
+            pmSaved.persons.get().then(expectAsync((List<Model> ms) {
+              expect(ms.length, equals(2));
             }));
           }));
         }));

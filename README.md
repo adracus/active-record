@@ -123,3 +123,35 @@ person.all(limit: 100, offset: 100).then(List<Model> models) // Do something wit
 
 **!!!CAUTION!!!**: Only parameters given in the args list will be escaped. If you concatenate strings and put those into the sql parameter,
 you are vulnerable to SQL-Injection!
+
+#### Relations
+Since v.1.1.0, Relations have been implemented in an early stage. Currently available relations are
+1..n-relations (in both sides). To define two related collections, proceed as follows:
+
+```dart
+class Person extends Collection {
+  get belongsTo => [new Relation(PostgresModel, Person)];
+}
+
+class PostgresModel extends Collection {
+  get hasMany => [new Relation(Person, PostgresModel)];
+}
+```
+The Relation constructor first takes the target Collection, then the holder collection. Expect
+this to change soon, because the information of the holder collection is already available.
+
+You can now use the relations on a model of a related instance, like following example:
+
+```dart
+postgresmodel.find(1).then((Model postgresModel) {
+  var relatedPerson = postgresModel.persons.nu;
+  relatedPerson.name = "A new name";
+  relatedPerson.save().then((Model savedPerson) {
+    savedPerson.postgresmodel.get().then((Model foundPModel) {
+      print(foundPModel);
+    });
+  });
+});
+```
+}
+```

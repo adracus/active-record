@@ -60,21 +60,17 @@ class _Model extends Object with DynObject<dynamic> implements Model{
   bool _isRelationGetter(String name)
     => _isHasManyRelationGetter(name) || _isBelongsToRelationGetter(name);
   
-  Future _doRelationReturn(Invocation invocation) {
+  _doRelationReturn(Invocation invocation) {
     var name = MirrorSystem.getName(invocation.memberName);
     if (_isHasManyRelationGetter(name)) {
       var r = _getHasManyRelation(name);
       var col = r.targetCollection;
-      return col.where(r.variableOnTarget.name +" =?", [this.id]).then((List<Model> ms) {
-        return new BelongsToManager(this, ms, r, this.parent);
-      });
+      return new HasManyManager(this, r, this.parent, col);
     }
     if (_isBelongsToRelationGetter(name)) {
       var r = _getBelongsToRelation(name);
       var col = r.targetCollection;
-      return col.find(this[r.variableOnHolder.name]).then((m) {
-        return new HasManyManager(this, m, r, this.parent);
-      });
+      return new BelongsToManager(this, r, this.parent, col);
     }
     return new Future.error("Relation method not supported");
   }
