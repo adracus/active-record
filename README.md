@@ -38,7 +38,8 @@ Thanks to [xxgreg](https://github.com/xxgreg) for his awesome [postgres driver f
 class Person extends Collection {
   get variables => [
     new Variable("name"),
-    new Variable("age", type: VariableType.NUMBER)
+    new Variable("age", type: VariableType.NUMBER),
+    "haircolor"
   ];
   get adapter => new PostgresAdapter(/* your uri here*/);
   void say(Model m, String msg) => print("${m["name"]} says: '$msg'");
@@ -130,15 +131,14 @@ Since v.1.1.0, Relations have been implemented in an early stage. Currently avai
 
 ```dart
 class Person extends Collection {
-  get belongsTo => [new Relation(PostgresModel, Person)];
+  get belongsTo => [PostgresModel];
 }
 
 class PostgresModel extends Collection {
-  get hasMany => [new Relation(Person, PostgresModel)];
+  get hasMany => [Person];
 }
 ```
-The Relation constructor first takes the target Collection, then the holder collection. Expect
-this to change soon, because the information of the holder collection is already available.
+The Relation constructor first takes the target Collection, then the holder collection.
 
 You can now use the relations on a model of a related instance, like following example:
 

@@ -13,8 +13,9 @@ abstract class Collection {
   
   Collection() {
     var vars = []..addAll(Variable.MODEL_STUBS)
-      ..addAll(variables);
-    this.belongsTo.forEach((r) => vars.add(r.variableOnHolder));
+      ..addAll(parseVariables(variables));
+    this.parseRelations(belongsTo).forEach((r) 
+      => vars.add(r.variableOnHolder));
     _schema = new Schema(this._tableName, vars);
     _adapter = this.adapter;
   }
@@ -129,9 +130,29 @@ abstract class Collection {
     });
   }
   
-  List<Relation> get belongsTo => [];
-  List<Relation> get hasMany => [];
-  List<Relation> get _relations => belongsTo..addAll(hasMany);
+  List<Variable> parseVariables(List args) {
+    var result = [];
+    args.forEach((arg) 
+      => (arg is Variable) ? result.add(arg) : 
+         (arg is String) ? result.add(new Variable(arg)) :
+         throw new UnsupportedError("Unsupported Variable"));
+    return result;
+  }
+  
+  List<Relation> parseRelations(List args) {
+    var result = [];
+    args.forEach((arg) 
+      => (arg is Relation) ? result.add(arg) : 
+         (arg is Type) ? result.add(new Relation(arg, this.runtimeType)) :
+         throw new UnsupportedError("Unsupported Relation"));
+    return result;
+  }
+  
+  List get belongsTo => [];
+  List get hasMany => [];
+  List<Relation> get pBelongsTo => parseRelations(belongsTo);
+  List<Relation> get pHasMany => parseRelations(hasMany);
+  List<Relation> get _relations => []..addAll(pBelongsTo)..addAll(pHasMany);
   BeforeCreateFunc get beforeCreate => (Model m){};
   AfterCreateFunc get afterCreate => (Model m){};
   BeforeUpdateFunc get beforeUpdate => (Model m){};
@@ -139,7 +160,7 @@ abstract class Collection {
   BeforeDestroyFunc get beforeDestroy => (Model m){};
   AfterDestroyFunc get afterDestroy => (){};
   DatabaseAdapter get adapter => defaultAdapter; // Override if needed
-  List<Variable> get variables => []; // Override to set Variables in Schema
+  List get variables => []; // Override to set Variables in Schema
   String get _tableName => MirrorSystem.getName(reflect(this).type.simpleName);
   Schema get schema => _schema;
   Model get nu => new _Model(this);

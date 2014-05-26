@@ -44,17 +44,17 @@ class _Model extends Object with DynObject<dynamic> implements Model{
   }
   
   bool _isBelongsToRelationGetter(String name)
-    => this.parent.belongsTo.map((e) => e.name.toLowerCase()).contains(name);
+    => this.parent.pBelongsTo.map((e) => e.name.toLowerCase()).contains(name);
   
   bool _isHasManyRelationGetter(String name)
-    => this.parent.hasMany.map((Relation e) => e.name.toLowerCase()+"s").contains(name);
+    => this.parent.pHasMany.map((Relation e) => e.name.toLowerCase()+"s").contains(name);
   
   Relation _getHasManyRelation(String name) {
-    return this.parent.hasMany.firstWhere((r) => r.name + "s" == name);
+    return this.parent.pHasMany.firstWhere((r) => r.name + "s" == name);
   }
   
   Relation _getBelongsToRelation(String name) {
-    return this.parent.belongsTo.firstWhere((r) => r.name == name);
+    return this.parent.pBelongsTo.firstWhere((r) => r.name == name);
   }
   
   bool _isRelationGetter(String name)

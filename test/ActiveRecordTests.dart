@@ -9,7 +9,7 @@ class Person extends Collection {
     new Variable("age", type: VariableType.INT)
   ];
   
-  get belongsTo => [new Relation(PostgresModel, Person)];
+  get belongsTo => [PostgresModel];
   
   void say(Model m, String msg) {
     print(getSayText(m, msg));
@@ -22,10 +22,10 @@ class Person extends Collection {
 
 class PostgresModel extends Collection {
   get variables => [
-    new Variable("name")
+    "name"
   ];
   
-  get hasMany => [new Relation(Person, PostgresModel)];
+  get hasMany => [Person];
   get belongsTo => [];
 }
 
