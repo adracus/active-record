@@ -37,8 +37,8 @@ Thanks to [xxgreg](https://github.com/xxgreg) for his awesome [postgres driver f
 ```dart
 class Person extends Collection {
   get variables => [
-    new Variable("name"),
-    new Variable("age", type: VariableType.NUMBER),
+    "name",
+    ["age", "Integer"],
     "haircolor"
   ];
   get adapter => new PostgresAdapter(/* your uri here*/);
