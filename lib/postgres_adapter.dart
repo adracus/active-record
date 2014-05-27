@@ -79,7 +79,7 @@ class PostgresAdapter implements DatabaseAdapter {
       case VariableType.STRING:
         return "varchar(255)";
       case VariableType.DATETIME:
-        return "date";
+        return "timestamp";
       default:
         return "varchar(255)";
     }

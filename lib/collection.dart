@@ -57,8 +57,8 @@ abstract class Collection {
       if (valRes) {
         log.info("Creating model $m");
         this.beforeCreate(m);
-        m["updated_at"] = new DateTime.now();
-        m["created_at"] = new DateTime.now();
+        m["updated_at"] = new DateTime.now().toIso8601String();
+        m["created_at"] = new DateTime.now().toIso8601String();
         return _adapter.saveModel(schema, m).then((created) {
           created.setClean();
           m = created;
@@ -75,7 +75,7 @@ abstract class Collection {
     return validate(m, Validation.ON_CREATE_FLAG).then((bool valRes) {
       if (valRes) {
         this.beforeUpdate(m);
-        m["updated_at"] = new DateTime.now();
+        m["updated_at"] = new DateTime.now().toIso8601String();
         return _adapter.updateModel(schema, m).then((updated) {
           updated.setClean();
           m = updated;
