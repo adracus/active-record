@@ -1,11 +1,6 @@
 part of activerecord;
 
-typedef void BeforeCreateFunc(Model toBePersisted);
-typedef void AfterCreateFunc(Model wasPersisted);
-typedef void BeforeUpdateFunc(Model toBeUpdated);
-typedef void AfterUpdateFunc(Model wasUpdated);
-typedef void BeforeDestroyFunc(Model toBeDestroyed);
-typedef void AfterDestroyFunc();
+typedef LifecycleMethod(Model m);
 
 abstract class Collection {
   DatabaseAdapter _adapter;
@@ -27,6 +22,7 @@ abstract class Collection {
   }
   
   Future<bool> init() {
+    log.info("Creating table ${_schema.tableName} if not exists.");
     return _adapter.createTable(_schema);
   }
   
@@ -44,23 +40,29 @@ abstract class Collection {
   
   Future<bool> destroy(Model m) {
     if (m.isPersisted) {
+      log.info("Destroying model with id ${m["id"]}");
       this.beforeDestroy(m);
       return _adapter.destroyModel(m).then((bool val) {
-        this.afterDestroy();
+        log.info("Destroyed model with id ${m["id"]}");
+        this.afterDestroy(m);
         return val;
       });
     }
+    log.severe("Non persisted model $m cannot be destroyed");
     throw("Model was not persisted --> cannot destroy model");
   }
   
   Future<Model> dbCreate(Model m) {
     return validate(m, Validation.ON_CREATE_FLAG).then((bool valRes) {
       if (valRes) {
+        log.info("Creating model $m");
         this.beforeCreate(m);
         m["updated_at"] = new DateTime.now();
         m["created_at"] = new DateTime.now();
         return _adapter.saveModel(schema, m).then((created) {
           created.setClean();
+          m = created;
+          log.info("Created new model $m");
           this.afterCreate(created);
           return created;
         });
@@ -76,6 +78,7 @@ abstract class Collection {
         m["updated_at"] = new DateTime.now();
         return _adapter.updateModel(schema, m).then((updated) {
           updated.setClean();
+          m = updated;
           this.afterUpdate(updated);
           return updated;
         });
@@ -162,12 +165,12 @@ abstract class Collection {
   List<Relation> get pBelongsTo => parseRelations(belongsTo);
   List<Relation> get pHasMany => parseRelations(hasMany);
   List<Relation> get _relations => []..addAll(pBelongsTo)..addAll(pHasMany);
-  BeforeCreateFunc get beforeCreate => (Model m){};
-  AfterCreateFunc get afterCreate => (Model m){};
-  BeforeUpdateFunc get beforeUpdate => (Model m){};
-  AfterUpdateFunc get afterUpdate => (Model m){};
-  BeforeDestroyFunc get beforeDestroy => (Model m){};
-  AfterDestroyFunc get afterDestroy => (){};
+  LifecycleMethod get beforeCreate => (Model m){};
+  LifecycleMethod get afterCreate => (Model m){};
+  LifecycleMethod get beforeUpdate => (Model m){};
+  LifecycleMethod get afterUpdate => (Model m){};
+  LifecycleMethod get beforeDestroy => (Model m){};
+  LifecycleMethod get afterDestroy => (Model m){};
   DatabaseAdapter get adapter => defaultAdapter; // Override if needed
   List get variables => []; // Override to set Variables in Schema
   String get _tableName => MirrorSystem.getName(reflect(this).type.simpleName);

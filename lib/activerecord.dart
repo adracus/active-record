@@ -4,6 +4,8 @@ import 'dart:mirrors';
 import 'dart:async';
 
 import 'package:postgresql/postgresql.dart';
+import 'package:logging/logging.dart';
+import 'package:json_object/json_object.dart';
 
 part 'database_adapter.dart';
 part 'postgres_adapter.dart';
@@ -13,7 +15,9 @@ part 'model.dart';
 part 'collection.dart';
 part 'validations.dart';
 
-var defaultAdapter = null;
+var defaultAdapter = null;  //Inject own defaultAdapter here
+var log = Logger.root;      //Inject own Logger here, see dart logging
+
 
 @proxy
 abstract class Row {

@@ -7,6 +7,7 @@ class PostgresAdapter implements DatabaseAdapter {
   
   Future<bool> createTable(Schema schema) {
     return connect(_uri).then((conn) {
+      log.info("Executing: ${buildCreateTableStatement(schema)}");
       return conn.execute(buildCreateTableStatement(schema)).then((_) {
         return true;
       }).catchError((e) {
@@ -19,6 +20,7 @@ class PostgresAdapter implements DatabaseAdapter {
   
   Future<bool> destroyModel(Model m) {
     return connect(_uri).then((conn) {
+      log.info("Executing: ${buildDestroyModelStatement(m).sql}");
       var s = buildDestroyModelStatement(m);
       return conn.execute(s.sql, s.values).then((_)
         => true).whenComplete(()
@@ -28,6 +30,7 @@ class PostgresAdapter implements DatabaseAdapter {
   
   Future<Model> saveModel(Schema schema, Model m) {
     return connect(_uri).then((conn) {
+      log.info("Executing: ${buildSaveModelStatement(m).sql}");
       var s = buildSaveModelStatement(m);
       return conn.query(s.sql, s.values).toList().then((rows) {
         rows.forEach((row) => updateModelWithRow(row, m));
@@ -38,6 +41,7 @@ class PostgresAdapter implements DatabaseAdapter {
   
   Future<Model> updateModel(Schema schema, Model m) {
     return connect(_uri).then((conn) {
+      log.info("Executing: ${buildUpdateModelStatement(m).sql}");
       var s = buildUpdateModelStatement(m);
       return conn.execute(s.sql, s.values).then((_) {
         return m;
@@ -47,6 +51,7 @@ class PostgresAdapter implements DatabaseAdapter {
   
   Future<List<Model>> modelsWhere(Collection c, String sql, List params, int limit, int offset) {
     return connect(_uri).then((conn) {
+      log.info("Executing: ${buildSelectModelStatement(c.schema, sql, params, limit, offset).sql}");
       Statement s = buildSelectModelStatement(c.schema, sql, params, limit, offset);
       return conn.query(s.sql, s.values).toList()
       .then((rows) {

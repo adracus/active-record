@@ -1,13 +1,17 @@
 import 'package:activerecord/activerecord.dart';
 import 'package:unittest/unittest.dart';
+import 'package:logging/logging.dart';
 import 'dart:async';
 import 'dart:io';
 
 class Person extends Collection {
   get variables => [
     ["name", "String", [], [new Length(max: 50, min: 2)]],
-    ["age", "Integer"]
+    ["age", "Integer"],
+    "password"
   ];
+  
+  get beforeCreate => (Model m) => (m.password = "Test Lifecycle");
   
   get belongsTo => [PostgresModel];
   
@@ -30,6 +34,9 @@ class PostgresModel extends Collection {
 }
 
 main(List<String> arguments) {
+  log.level = Level.ALL;
+  log.onRecord.listen((LogRecord rec)
+    => print('${rec.level.name}: ${rec.time}: ${rec.message}'));
   var dbUri = Platform.environment["DATABASE_URL"];
   if (dbUri!= null) defaultAdapter = new PostgresAdapter(dbUri);
   var person = new Person();
@@ -66,10 +73,11 @@ main(List<String> arguments) {
         if (dbUri != null) {
           var m = postgresModel.nu;
           m["name"] = "A new user";
-          m.save().then(expectAsync((mo) {
+          m.save().then(expectAsync((Model mo) {
             expect(mo, isNotNull);
             expect(mo.id, isNotNull);
             expect(mo["name"], "A new user");
+            expect(mo.isPersisted, isTrue);
           }));
         }
       });
@@ -141,6 +149,7 @@ main(List<String> arguments) {
         Future.wait(futures).then(expectAsync((vals) {
           person.all(limit: 10).then(expectAsync((List<Model> models) {
             expect(models.length, equals(10));
+            models.forEach((ml) => expect(ml, isNotNull));
           }));
         }));
       });
