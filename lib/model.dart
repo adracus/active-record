@@ -18,6 +18,7 @@ abstract class Model {
   Future<Model> save();
   Future<bool> destroy();
   Collection get parent;
+  JsonObject get jsonObject;
   operator[](String key);
   operator[]=(String key, v);
   forEach(f(String key, v));
