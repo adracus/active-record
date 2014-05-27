@@ -2,6 +2,7 @@ library activerecord;
 
 import 'dart:mirrors';
 import 'dart:async';
+import 'dart:convert' show JSON;
 
 import 'package:postgresql/postgresql.dart';
 import 'package:logging/logging.dart';

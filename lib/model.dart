@@ -19,6 +19,7 @@ abstract class Model {
   Future<bool> destroy();
   Collection get parent;
   JsonObject get jsonObject;
+  String get jsonString;
   operator[](String key);
   operator[]=(String key, v);
   forEach(f(String key, v));
@@ -38,6 +39,7 @@ class _Model extends Object with DynObject<dynamic> implements Model{
   bool get isDirty => _isDirty;
   bool get isPersisted => _isPersisted;
   bool get needsToBePersisted => (_isDirty || !_isPersisted);
+  String get jsonString => JSON.encode(_displayMap, toEncodable: (arg) => arg.toString());
   
   void setClean() {
     this._isDirty = false;
@@ -111,10 +113,14 @@ class _Model extends Object with DynObject<dynamic> implements Model{
   
   String toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
   JsonObject get jsonObject {
+    var res = new JsonObject.fromMap(_displayMap);
+    return res;
+  }
+  
+  Map<String, dynamic> get _displayMap {
     var variables = parent.schema.variables;
     variables.forEach((v) => this[v.name] == null? this[v.name] = null : null);
-    var res = new JsonObject.fromMap(_vars);
-    return res;
+    return _vars;
   }
   
   setVariable(String key, v) {

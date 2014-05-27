@@ -187,7 +187,6 @@ main(List<String> arguments) {
         var p = person.nu;
         p.age = 20;
         p.name = "Steve";
-        print(p.jsonObject);
         expect(p.jsonObject.name, equals("Steve"));
         expect(p.jsonObject.age, equals(20));
         expect(p.password, isNull);
