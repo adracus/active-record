@@ -111,8 +111,9 @@ class _Model extends Object with DynObject<dynamic> implements Model{
   
   String toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
   JsonObject get jsonObject {
-    var res = new JsonObject();
-    this.parent.schema.variables.forEach((v) => res[v.name] = this[v.name]);
+    var variables = parent.schema.variables;
+    variables.forEach((v) => this[v.name] == null? this[v.name] = null : null);
+    var res = new JsonObject.fromMap(_vars);
     return res;
   }
   
