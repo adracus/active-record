@@ -195,7 +195,8 @@ abstract class Collection {
    * Throws an error, if no or more than one models were found.
    */
   Future<Model> find(int id) {
-    return where("id = ?", [id], limit: 1).then((List<Model> models) {
+    return adapter.findModelsByVariables(this, {Variable.ID_FIELD: id})
+        .then((List<Model> models) {
       if (models.length != 1) {
         throw("Invalid result: ${models.length} found");
       } else {
@@ -211,7 +212,7 @@ abstract class Collection {
    * Returns all [Model]s of the underlying adapter.
    */
   Future<List<Model>> all({int limit, int offset}) {
-    return where("", [], limit: limit, offset: offset);
+    return adapter.findModelsByVariables(this, {}, limit: limit, offset: offset);
   }
   
   
@@ -224,7 +225,9 @@ abstract class Collection {
    * implementation for this.
    */
   Future<List<Model>> where(String sql, List params, {int limit, int offset}) {
-    return _adapter.modelsWhere(this, sql, params, limit, offset).then((ms) {
+    return _adapter
+        .modelsWhere(this, sql, params, limit: limit, offset: offset)
+        .then((ms) {
       ms.forEach((m) => m.setClean());
       return ms;
     });
