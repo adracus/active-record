@@ -4,12 +4,10 @@ import 'dart:mirrors';
 import 'dart:async';
 import 'dart:convert' show JSON;
 
-import 'package:postgresql/postgresql.dart';
 import 'package:logging/logging.dart';
 import 'package:json_object/json_object.dart';
 
 part 'database_adapter.dart';
-part 'postgres_adapter.dart';
 part 'database_abstraction.dart';
 part 'relation.dart';
 part 'model.dart';

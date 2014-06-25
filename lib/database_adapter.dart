@@ -6,4 +6,7 @@ abstract class DatabaseAdapter {
   Future<bool> destroyModel(Model m);
   Future<List<Model>> modelsWhere(Collection c, String sql, List args, int limit, int offset);
   Future<bool> createTable(Schema schema);
+  Future<bool> addColumnToTable(String tableName, Variable variable);
+  Future<bool> removeColumnFromTable(String tableName, String variableName);
+  Future<bool> dropTable(String tableName);
 }

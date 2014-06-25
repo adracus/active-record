@@ -6,6 +6,13 @@ abstract class Collection {
   DatabaseAdapter _adapter;
   Schema _schema;
   
+  /**
+   * Instantiates a new [Collection] instance.
+   * 
+   * Instantiates a new [Collection] instance with the variables specified by
+   * variables and the relations specified by the different relations.
+   * The created_at, updated_at and id attribute are set by default.
+   */
   Collection() {
     var vars = []..addAll(Variable.MODEL_STUBS)
       ..addAll(parseVariables(variables));
@@ -15,17 +22,40 @@ abstract class Collection {
     _adapter = this.adapter;
   }
   
+  
+  /**
+   * Instantiates a model of the underlying collection.
+   * 
+   * Instantiates a model with all model methods specified in the
+   * Collection class (methods with first parameter [Model])
+   */
   Model create(Map <String, dynamic> args) {
     var m = this.nu;
     args.forEach((String k, v) => m[k] = v);
     return m;
   }
   
+  /**
+   * Initializes this collection (creates the table of the collection).
+   * 
+   * This makes the underlying adapter create a table or something equivalent.
+   * Returns a future, which is true, if it worked and false if not.
+   */
   Future<bool> init() {
     log.info("Creating table ${_schema.tableName} if not exists.");
     return _adapter.createTable(_schema);
   }
   
+  
+  /**
+   * Returns all [Model] methods of this collection.
+   * 
+   * Returns all [Model] methods of this collection. [Model] methods are
+   * methods, whose first parameter is [Model], for example
+   * 
+   *     String say(Model m, String msg)
+   * ...
+   */
   List<MethodMirror> getModelMethods() {
     var lst = [];
     reflect(this).type.instanceMembers.forEach((Symbol k, MethodMirror m) {
@@ -34,10 +64,24 @@ abstract class Collection {
     return lst;
   }
   
+  /**
+   * Checks, if the given [MethodMirror] is a [Model] method.
+   * 
+   * Checks, if the given [MethodMirror] is a [Model] methods
+   * are methods, whose first parameter is [Model]. Returns
+   * true, if it is a [Model] method and false otherwise.
+   */
   bool isModelMethod(MethodMirror m) {
     return (m.parameters.length > 0 && m.parameters[0].type == reflectClass(Model));
   }
   
+  
+  /**
+   * Destroys the [Model] persistence.
+   * 
+   * Destroys the [Model] persistence. For example, on a relational database,
+   * the row of the [Model] deleted.
+   */
   Future<bool> destroy(Model m) {
     if (m.isPersisted) {
       log.info("Destroying model with id ${m["id"]}");
@@ -52,6 +96,14 @@ abstract class Collection {
     throw("Model was not persisted --> cannot destroy model");
   }
   
+  
+  /**
+   * Executes the needed operations to create the model on its database.
+   * 
+   * Executes the needed operations to create the model on its database.
+   * Sets created_at and updated_at fields and returns the model after
+   * creation.
+   */
   Future<Model> dbCreate(Model m) {
     return validate(m, Validation.ON_CREATE_FLAG).then((bool valRes) {
       if (valRes) {
@@ -71,6 +123,13 @@ abstract class Collection {
     });
   }
   
+  
+  /**
+   * Executes the needed operations to update the model on its database.
+   * 
+   * Executes the needed operations to update the model on its database.
+   * Updates the updated_at field and sets the model "clean".
+   */
   Future<Model> dbUpdate(Model m) {
     return validate(m, Validation.ON_CREATE_FLAG).then((bool valRes) {
       if (valRes) {
@@ -87,6 +146,13 @@ abstract class Collection {
     });
   }
   
+  
+  /**
+   * Saves the specified [Model].
+   * 
+   * Saves the specified [Model]. If it is not persisted yet,
+   * it will be saved. If it is existing, it will be updated.
+   */
   Future<Model> save(Model m) {
     if (m.needsToBePersisted) {
       if(m.isPersisted) return dbUpdate(m);
@@ -95,6 +161,15 @@ abstract class Collection {
     return new Future.value(m);
   }
   
+  
+  /**
+   * Validates the given [Model] with the given flag.
+   * 
+   * Validates the given [Model] with the given flag.
+   * The flags can be found in the [Validation] class.
+   * Returns a future with true if all [Validation]s succeeded
+   * and false otherwise.
+   */
   Future<bool> validate(Model m, int flag) {
     if (m.parent != this) throw("Not same parent");
     var validationResults = new List<Future<bool>>();
@@ -112,6 +187,13 @@ abstract class Collection {
     });
   }
   
+  
+  /** 
+   * Returns the [Model] specified by the given id.
+   * 
+   * Returns the [Model] specified by the given id.
+   * Throws an error, if no or more than one models were found.
+   */
   Future<Model> find(int id) {
     return where("id = ?", [id], limit: 1).then((List<Model> models) {
       if (models.length != 1) {
@@ -122,10 +204,25 @@ abstract class Collection {
     });
   }
   
+  
+  /**
+   * Returns all [Model]s of the underlying adapter.
+   * 
+   * Returns all [Model]s of the underlying adapter.
+   */
   Future<List<Model>> all({int limit, int offset}) {
     return where("", [], limit: limit, offset: offset);
   }
   
+  
+  /**
+   * Returns all [Model]s, where the sql matches. Attention: Adapter-specific!
+   * 
+   * Returns all [Model]s, where the sql matches. Attention: Adapter-specific!
+   * Also attention: Beware of sql injection here, the parameters should be handed
+   * over the parameter list and escaped by the adapter. Read your adapter's
+   * implementation for this.
+   */
   Future<List<Model>> where(String sql, List params, {int limit, int offset}) {
     return _adapter.modelsWhere(this, sql, params, limit, offset).then((ms) {
       ms.forEach((m) => m.setClean());
@@ -133,6 +230,13 @@ abstract class Collection {
     });
   }
   
+  
+  /**
+   * Parses all internal variables.
+   * 
+   * Parses all internal variables. Makes it possible to specify
+   * a variable via a string or a [Variable] or a list of those.
+   */
   List<Variable> parseVariables(List args) {
     var result = [];
     args.forEach((arg) 
@@ -143,6 +247,14 @@ abstract class Collection {
     return result;
   }
   
+  
+  /**
+   * Parses the given List to [Variable] instances.
+   * 
+   * Parses the given List to [Variable] instances. The name is the first
+   * element, from then on it is optional. Second possible argument is the
+   * type, then the constraints and finally the validations.
+   */
   Variable variableFromList(List args) {
     var name = args[0];
     var type = args.length > 1 ? new VariableType.fromString(args[1]) : VariableType.STRING;
@@ -151,6 +263,14 @@ abstract class Collection {
     return new Variable(name, type: type, constrs: constraints, validations: validations);
   }
   
+  
+  /**
+   * Parses Relations from a given List.
+   * 
+   * Parses Relations from a given List. Makes it possible to specify
+   * a Relation to another class by simply entering the Type of the
+   * related class.
+   */
   List<Relation> parseRelations(List args) {
     var result = [];
     args.forEach((arg) 
@@ -160,7 +280,22 @@ abstract class Collection {
     return result;
   }
   
+  
+  /**
+   * Specifies the Relations to which this Collection belongs.
+   * 
+   * Specifies the Relations to which this Collection belongs.
+   * If it belongs to a another Collection, this Collection will
+   * get a foreign key to mirror the key of the other Collection.
+   */
   List get belongsTo => [];
+  
+  
+  /**
+   * Specifies the Relations, of which this Collection has many.
+   * 
+   * Specifies Relations which this Collection has.
+   */
   List get hasMany => [];
   List<Relation> get pBelongsTo => parseRelations(belongsTo);
   List<Relation> get pHasMany => parseRelations(hasMany);
@@ -171,9 +306,30 @@ abstract class Collection {
   LifecycleMethod get afterUpdate => (Model m){};
   LifecycleMethod get beforeDestroy => (Model m){};
   LifecycleMethod get afterDestroy => (Model m){};
-  DatabaseAdapter get adapter => defaultAdapter; // Override if needed
+  
+  
+  /**
+   * Override this method to specify an adapter.
+   * 
+   * Override this method to specify an adapter.
+   * If it is not overridden, the [defaultAdapter] will
+   * be used.
+   */
+  DatabaseAdapter get adapter => defaultAdapter;
+  
+  
+  /**
+   * Override this method to specify variables for this Collection.
+   * 
+   * Override this method to specify variables for this Collection.
+   * Variables can be specified as String, or as Variable instances.
+   */
   List get variables => []; // Override to set Variables in Schema
   String get _tableName => MirrorSystem.getName(reflect(this).type.simpleName);
   Schema get schema => _schema;
+  
+  /**
+   * Instantiates a new [Model] of this collection.
+   */
   Model get nu => new _Model(this);
 }

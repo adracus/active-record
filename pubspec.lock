@@ -29,6 +29,10 @@ packages:
     description: path
     source: hosted
     version: "1.1.0"
+  postgres_adapter:
+    description: postgres_adapter
+    source: hosted
+    version: "0.0.1"
   postgresql:
     description: postgresql
     source: hosted
