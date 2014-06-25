@@ -8,7 +8,7 @@ packages:
   collection:
     description: collection
     source: hosted
-    version: "0.9.2"
+    version: "0.9.3+1"
   crypto:
     description: crypto
     source: hosted
@@ -24,15 +24,15 @@ packages:
   matcher:
     description: matcher
     source: hosted
-    version: "0.10.0"
+    version: "0.10.1+1"
   path:
     description: path
     source: hosted
-    version: "1.1.0"
+    version: "1.2.1"
   postgres_adapter:
     description: postgres_adapter
     source: hosted
-    version: "0.0.1"
+    version: "0.0.5"
   postgresql:
     description: postgresql
     source: hosted
@@ -40,8 +40,8 @@ packages:
   stack_trace:
     description: stack_trace
     source: hosted
-    version: "0.9.3+1"
+    version: "1.0.1"
   unittest:
     description: unittest
     source: hosted
-    version: "0.11.0"
+    version: "0.11.0+2"

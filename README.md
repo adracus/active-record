@@ -27,11 +27,13 @@ var mark = person.nu;
 If you've seen ActiveRecord in Ruby or Waterline in Node, you might want to add attributes to the future model of your collection. To do so,
 you have to subclass the Collection class and override some methods. **The id field, the created\_at and the updated\_at field will be inserted
 automatically and also updated automatically**.
-If you subclass, you also may specify the Database Adapter you want to use. Currently, there is only the postgres adapter,
-which needs an uri to be instantiated. The uri has to be in the following format:
+If you subclass, you also may specify the Database Adapter you want to use.
+The current database adapters are:
 
-    postgres://<username>:<password>@<host>:<port>/<database>
-Thanks to [xxgreg](https://github.com/xxgreg) for his awesome [postgres driver for dart](https://github.com/xxgreg/postgresql)!
+* [Postgres adapter](https://github.com/Adracus/PostgresAdapter)
+
+Feel free to contribute further adapters! Also other contribution is very appreciated!
+
 #### Subclassing Example
 
 ```dart

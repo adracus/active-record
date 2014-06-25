@@ -1,5 +1,5 @@
 name: activerecord
-version: 2.0.0
+version: 2.0.1
 author: Axel Christ <adracus@gmail.com>
 description: An Active Record implementation for the Dart language
 homepage: https://github.com/Adracus/ActiveRecord
@@ -9,4 +9,4 @@ dependencies:
 dev_dependencies:
   unittest: any
   args: any
-  postgres_adapter: ">=0.0.1 <=0.1.0"
+  postgres_adapter: ">=0.0.2 <=0.1.0"
