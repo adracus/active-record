@@ -2,8 +2,11 @@
 # See http://pub.dartlang.org/doc/glossary.html#lockfile
 packages:
   activemigration:
-    description: activemigration
-    source: hosted
+    description:
+      ref: null
+      resolved-ref: d108ad67e2c7a88c4afe82aeae6c31d2901e9982
+      url: "git://github.com/Adracus/ActiveMigration"
+    source: git
     version: "0.0.2"
   args:
     description: args

@@ -1,13 +1,17 @@
 name: activerecord
-version: 2.0.4
+version: 2.0.5
 author: Axel Christ <adracus@gmail.com>
 description: An Active Record implementation for the Dart language
 homepage: https://github.com/Adracus/ActiveRecord
 dependencies:
-  logging: ">=0.9.1+1 <0.10.0"
-  json_object: ">=1.0.18+2 <2.0.0"
-  activemigration: ">=0.0.2 <0.1.0"
+  activemigration:
+    git: git://github.com/Adracus/ActiveMigration
+    version: '>=0.0.2 <0.1.0'
+  json_object: '>=1.0.18+2 <2.0.0'
+  logging: '>=0.9.1+1 <0.10.0'
 dev_dependencies:
-  unittest: any
   args: any
-  postgres_adapter: ">=0.0.6 <=0.1.0"
+  postgres_adapter:
+    git: https://github.com/Adracus/PostgresAdapter
+    version: '>=0.0.6 <=0.1.0'
+  unittest: any
