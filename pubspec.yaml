@@ -5,13 +5,13 @@ description: An Active Record implementation for the Dart language
 homepage: https://github.com/Adracus/ActiveRecord
 dependencies:
   activemigration:
-    git: git://github.com/Adracus/ActiveMigration
+    git: git://github.com/Adracus/ActiveMigration.git
     version: '>=0.0.2 <0.1.0'
   json_object: '>=1.0.18+2 <2.0.0'
   logging: '>=0.9.1+1 <0.10.0'
 dev_dependencies:
   args: any
   postgres_adapter:
-    git: https://github.com/Adracus/PostgresAdapter
+    git: git://github.com/Adracus/PostgresAdapter.git
     version: '>=0.0.6 <=0.1.0'
   unittest: any
