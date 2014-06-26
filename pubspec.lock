@@ -36,7 +36,7 @@ packages:
   postgres_adapter:
     description: postgres_adapter
     source: hosted
-    version: "0.0.5"
+    version: "0.0.6"
   postgresql:
     description: postgresql
     source: hosted

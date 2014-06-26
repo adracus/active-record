@@ -39,7 +39,7 @@ main(List<String> arguments) {
   log.onRecord.listen((LogRecord rec)
     => print('${rec.level.name}: ${rec.time}: ${rec.message}'));
   var dbUri = Platform.environment["DATABASE_URL"];
-  if (dbUri!= null) defaultAdapter = new PostgresAdapter(dbUri);
+  if (dbUri!= null) defaultAdapter = new PostgresAdapter.fromUri(dbUri);
   var person = new Person();
   var postgresModel = new PostgresModel();
   Future.wait([person.init(), postgresModel.init()]).then((res) {
