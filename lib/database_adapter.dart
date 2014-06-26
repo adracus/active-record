@@ -12,5 +12,5 @@ abstract class DatabaseAdapter {
   Future<bool> addColumnToTable(String tableName, Variable variable);
   Future<bool> removeColumnFromTable(String tableName, String variableName);
   Future<bool> dropTable(String tableName);
-  DatabaseAdapter getInstance(Map config);
+  DatabaseAdapter(Configuration config);
 }

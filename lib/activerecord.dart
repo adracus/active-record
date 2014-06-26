@@ -4,6 +4,7 @@ import 'dart:mirrors';
 import 'dart:async';
 import 'dart:convert' show JSON;
 
+import 'package:activemigration/activemigration.dart';
 import 'package:logging/logging.dart';
 import 'package:json_object/json_object.dart';
 
