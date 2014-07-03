@@ -3,11 +3,10 @@
 packages:
   activemigration:
     description:
-      ref: null
-      resolved-ref: d108ad67e2c7a88c4afe82aeae6c31d2901e9982
-      url: "git://github.com/Adracus/ActiveMigration"
-    source: git
-    version: "0.0.2"
+      path: "/home/axel/dart/ActiveMigration"
+      relative: false
+    source: path
+    version: "0.0.3"
   args:
     description: args
     source: hosted
@@ -16,10 +15,6 @@ packages:
     description: collection
     source: hosted
     version: "0.9.3+1"
-  crypto:
-    description: crypto
-    source: hosted
-    version: "0.9.0"
   json_object:
     description: json_object
     source: hosted
@@ -36,14 +31,6 @@ packages:
     description: path
     source: hosted
     version: "1.2.1"
-  postgres_adapter:
-    description: postgres_adapter
-    source: hosted
-    version: "0.0.6"
-  postgresql:
-    description: postgresql
-    source: hosted
-    version: "0.2.13"
   source_maps:
     description: source_maps
     source: hosted

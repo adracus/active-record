@@ -8,7 +8,6 @@ import 'package:activemigration/activemigration.dart';
 import 'package:logging/logging.dart';
 import 'package:json_object/json_object.dart';
 
-part 'database_adapter.dart';
 part 'database_abstraction.dart';
 part 'relation.dart';
 part 'model.dart';
