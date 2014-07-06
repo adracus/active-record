@@ -40,6 +40,8 @@ abstract class Collection {
    * 
    * This makes the underlying adapter create a table or something equivalent.
    * Returns a future, which is true, if it worked and false if not.
+   * Attention: If you use ActiveMigration, you don't have to use this method.
+   * This Method is more suitable for quick testing.
    */
   Future<bool> init() {
     log.info("Creating table ${_schema.tableName} if not exists.");
@@ -186,6 +188,32 @@ abstract class Collection {
       return result;
     });
   }
+  
+  /**
+   * Searches this collection for the given input
+   * 
+   * Searches this collection for the given input. The input can be either
+   * a single String containing the variable name or a list of strings
+   * containing variable names.
+   */
+  Future<List<Model>> findByVariable(Map<String, dynamic> input,
+      {int limit, int offset}) =>
+      _adapter.findModelsByVariables(this,
+          _generateFindVariableMap(input));
+  
+  Map<Variable, dynamic> _generateFindVariableMap(Map<String, dynamic> input) {
+    var result = new Map<Variable, dynamic>();
+    input.forEach((k, v) {
+      result[_findVariableByName(k)] = input[k];
+    });
+    return result;
+  }
+  
+  static List _dynToList(input) =>
+      input is List ? input : [input];
+  
+  Variable _findVariableByName(String name) =>
+      _schema.variables.where((v) => v.name == name).first;
   
   
   /** 

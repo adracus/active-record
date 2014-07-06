@@ -2,19 +2,25 @@
 # See http://pub.dartlang.org/doc/glossary.html#lockfile
 packages:
   activemigration:
-    description:
-      path: "/home/axel/dart/ActiveMigration"
-      relative: false
-    source: path
-    version: "0.0.3"
+    description: activemigration
+    source: hosted
+    version: "0.1.0"
   args:
     description: args
     source: hosted
     version: "0.11.0+1"
+  codewriter:
+    description: codewriter
+    source: hosted
+    version: "0.2.2"
   collection:
     description: collection
     source: hosted
     version: "0.9.3+1"
+  crypto:
+    description: crypto
+    source: hosted
+    version: "0.9.0"
   json_object:
     description: json_object
     source: hosted
@@ -31,6 +37,10 @@ packages:
     description: path
     source: hosted
     version: "1.2.1"
+  postgresql:
+    description: postgresql
+    source: hosted
+    version: "0.2.14"
   source_maps:
     description: source_maps
     source: hosted

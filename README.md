@@ -4,154 +4,121 @@ ActiveRecord
 
 Implementation of the [Active Record pattern](http://en.wikipedia.org/wiki/Active_record_pattern) with some specialties from the Dart language.
 
-### Things you should know
-This implementation of the Active Record pattern differs from other implementations. For example, in the Active Record implementation in
-Ruby, to define an Active Record class, one had to subclass the ActiveRecord::Base class. After doing that, the subclass had methods
-like `find` or other, dynamic methods. In this implementation, to get a kind of Active Record class, you have to subclass the `Collection`
-class. In contrast to the Ruby Active Record implementation, you now have to instantiate an instance of this class:
+## How to use
+### Preparation
+In order to use ActiveRecord, you have to subclass the `Collection` class.
+Variables of the Collection are defined by overriding the `get variables` method.
+You can override this method in a variety of styles: For instance, if you simply want
+to define a String variable (like e.g. name), the result of `get variables` should
+be `["name"]. If you want to specify type of the variable as well as constraints or
+validations, you've got two options: You can either hand over a list, with
+the name as first, the type as second, constraints and validations as fourth and fifth
+argument, or hand over a Variable object.
+
+Example of List approach:
 
 ```dart
-var person = new Person();
-```
-    
-This new instance has now the methods you are used to use in the Active Record implementation of Ruby.
-You may ask yourself now: _"What if I don't want to instantiate a Collection but a Model?"_ - For this, there is a solution: To instantiate
-a model, which belongs to the collection you created, use the `nu`-"constructor". This "constructor" is actually a getter, but it produces
-a model which knows the parent collection:
-
-```dart
-var mark = person.nu;
+get variables => [["name", "Integer"]];
 ```
 
-### Create your own collection
-If you've seen ActiveRecord in Ruby or Waterline in Node, you might want to add attributes to the future model of your collection. To do so,
-you have to subclass the Collection class and override some methods. **The id field, the created\_at and the updated\_at field will be inserted
-automatically and also updated automatically**.
-If you subclass, you also may specify the Database Adapter you want to use.
-The current database adapters are:
+Currently supported types are String, Integer, Double, Bool, Text and Datetime.
 
-* [Postgres adapter](https://github.com/Adracus/PostgresAdapter)
+Another important point is overriding the `get adapter` method. If you don't
+override this method, the collection will use the `defaultAdapter` as adapter,
+which is by default null (you should also change this). Adapters are available
+via the [ActiveMigration library](https://github.com/Adracus/ActiveMigration),
+which also features generation and execution of Migration files. Contribution
+of further adapters as well as contribution to this repository are appreciated.
 
-Feel free to contribute further adapters! Also other contribution is very appreciated!
+### Creating, saving, finding and destroying Records
+#### Creating
+Creation of Collection instances can be done via the `get nu` method of the
+Collection class. This immediatly returns a Model instance. You can then
+Manipulate this Model until you want to save it.
 
-#### Subclassing Example
+#### Saving
+To save it, call the `save` method on the Model instance. This returns a
+future containing the saved Model.
+
+#### Finding
+For finding, there are four methods of each Collection instance:
+##### find(int id)
+This returns a Future containing the Model with the specified id. Only a
+single Model instance is returned.
+##### all({int limit, int offset})
+Returns all Models of the Collection. You may specify limit and/or offset,
+if you don't want all or just models after a specific number of models.
+##### where(String sql, List params, {int limit, int offset})
+This executes the given sql command on the underlying adapter (doesn't have
+to be sql, but in the initial versithreeon this was the name). Be sure to
+put the search parameters into the params List because then the adapter
+can do prepared statements.
+##### findByVariable(Map<String, dynamic> input, {int limit, int offset})
+This is the adapter independent way of finding variables. Simply specify
+a map of variable names and the corresponding values, which will then be
+returned.
+
+#### Destroying
+Destroying is very simple: Get a Model which has been persisted via the
+various find methods and call the `destroy` method on it. This returns
+a Future with a boolean indicating the success of the destroy operation.
+
+### Consistency of the persistence
+In order to provide a consistent persistence, there are two ways of
+providing checks to the given variables: _Validations_ and _Constraints_.
+Constraints are checks which run on the adapters, Validations are checks
+which run inside ActiveRecord. This results in Validations being always
+available and Constraints being available only on some Adapters.
+
+### Further subclassing of Collections
+#### Model methods
+Methods, which are available on Model instances can be specified inside
+the collection. A Model method has a Model as the first parameter. So,
+a Model method could look like this:
 
 ```dart
-class Person extends Collection {
-  get variables => [
-    "name",
-    ["age", "Integer"],
-    "haircolor"
-  ];
-  get adapter => new PostgresAdapter(/* your uri here*/);
-  void say(Model m, String msg) => print("${m["name"]} says: '$msg'");
+void say(Model m, String text) {
+  print(m["name"] + " wants to say $text");
 }
 ```
-Lifecycle methods are also available:
-* beforeCreate(Model m)
-* afterCreate(Model m)
-* beforeUpdate(Model m)
-* afterUpdate(Model m)
-* beforeDestroy(Model m)
-* afterDestroy()
-
-##### Define instance methods of Models
-To define an instance method of a Model, you don't need to modify the Model class (since every instance of every Collection will be a Model).
-A model instance method is "defined" in its collection: Simply define an instance function for the collection and add the Model, on which
-the method shall be executed as first parameter. So, for example, such a method would look like this:
-
-```dart
-void say(Model m, String msg) => print("${m["name"]} says: '$msg'");
-```
-If you now want to call this method on a model instance, call it as if the model argument wouldn't be there, for example:
-```dart
-var myPerson = person.nu;
-myPerson.name = "Duffman";
-myPerson.say("hello");
-```
-The method call will be redirected from the Model to its parent collection, adding itself as the first parameter.
-
-### Saving, finding and querying models
-#### Saving models
-To save models, simply call the `save()` method on a model instance. This will return a Future containing the Model (if it worked). If you
-did not specify an id, the id will automatically be incremented by the adapter. The returned model will have an id attribute. Example code:
-
-```dart
-myPerson.save().then((Model savedMyPerson) // Do something with the saved person
-```
-##### Validations
-Validations have been built in since version 0.2.0. Validations happen in Active record itself.
-Validations have to be defined when defining the variables of a Model, like so:
-
-```dart
-get variables => [
-  new Variable("name", validations: [new Length(max: 50, min: 2)]),
-  new Variable("age", type: VariableType.INT)
-];
-```
-Here, the validation `Length` is used. Other available validations are:
-* Presence
-* Absence
-* Unique
-* Custom (implement an own method validating the model here)
-
-Validations have three possibilities of triggering: On save, on create and on update. To specify
-this, fill in the optional named parameter triggers with constants from the Validations class.
-Expect the syntax of defining variables, their type and their constraints to change
-soon, in a more effective and less time consuming way.
-
-#### Finding models by id
-To find models, call the `find(int id)` method on a collection instance. This returns a Future containing the Model and will throw an error
-if the specified Model does not exist:
-
-```dart
-person.find(1).then((Model foundModel) // Do something with the found person
-```
-#### Querying models by specific criteria
-In order to find Models where several conditions apply, use the `where(sql, args)`-method. This method will give you a list of Models which
-fit to the given criteria. The where syntax is the same as in the ruby implementation of ActiveRecord. So, if you want to query for a person
-with name "mark" and an age greater than 30, the code would look like this:
-
-```dart
-person.where("name = ? AND age >= ?", ["mark", 30]).then(List<Model> models) // Do something with the found models
-```
-
-The question marks will be replaced by the parameters given in the args list. It is also
-possible to limit and to offset the amount of `collection.where` and `collection.all` by adding the
-optional named parameter limit and/or offset:
-
-```dart
-person.all(limit: 100, offset: 100).then(List<Model> models) // Do something with the found models
-```
-
-**!!!CAUTION!!!**: Only parameters given in the args list will be escaped. If you concatenate strings and put those into the sql parameter,
-you are vulnerable to SQL-Injection!
 
 #### Relations
-Since v.1.1.0, Relations have been implemented in an early stage. Currently available relations are
-1..n-relations (in both sides). To define two related collections, proceed as follows:
+Relations can be specified by overriding the appropriate methods.
+Those methods are:
++ hasMany
++ belongsTo
+
+Relations can be specified in two ways:
+One way is to directly specify the type of the other collection and the
+other way is to specify a Relation object.
+
+Example:
 
 ```dart
-class Person extends Collection {
-  get belongsTo => [PostgresModel];
-}
-
-class PostgresModel extends Collection {
-  get hasMany => [Person];
-}
+List get belongsTo => [AnotherCollection];
 ```
-The Relation constructor first takes the target Collection, then the holder collection.
 
-You can now use the relations on a model of a related instance, like following example:
+To get related Models of a Model instance, simply call a method with
+the lowercase name of the related collection. If it is a "hasMany" relation,
+add an "s". Also, if it is a "hasMany" relation, you can create Model instances
+of the related Collection by calling `nu` on the result of this method.
+
+Example:
 
 ```dart
-postgresmodel.find(1).then((Model postgresModel) {
-  var relatedPerson = postgresModel.persons.nu;
-  relatedPerson.name = "A new name";
-  relatedPerson.save().then((Model savedPerson) {
-    savedPerson.postgresmodel.get().then((Model foundPModel) {
-      print(foundPModel);
-    });
-  });
-});
+// Receiving models
+mymodel.anothercollections.get.then((anotherCollectionModels) => ...);
+// Creating models
+var newRelatedModel = mymodel.anothercollections.nu;
 ```
+
+### Lifecycle management
+Some methods on models should be triggered in specific states of the
+Lifecycle of a Model. For this, there are Lifecycle methods. Current
+Lifecycle methods are:
++ beforeCreate(Model m)
++ afterCreate(Model m)
++ beforeUpdate(Model m)
++ afterUpdate(Model m)
++ beforeDestroy(Model m)
++ afterDestroy(Model m)

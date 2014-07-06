@@ -113,13 +113,14 @@ main(List<String> arguments) {
         }));
       });
       
-      test("Test findModelWhere", () {
+      test("Test findByVariable", () {
         var test = person.nu;
         test["name"] = "IhatedMyOldName";
-        test["age"] = 300;
+        test["age"] = 30;
         test.save().then(expectAsync((saved) {
           expect(saved, isNotNull);
-          person.where("name = ? AND age >= ?", ["IhatedMyOldName", 30]).
+          person.findByVariable({"name": "IhatedMyOldName",
+                        "age": 30}).
           then(expectAsync((List<Model> models) {
             var model = models[0];
             expect(model["age"], greaterThanOrEqualTo(30));
