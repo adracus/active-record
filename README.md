@@ -25,7 +25,15 @@ Currently supported types are String, Integer, Double, Bool, Text and Datetime.
 
 Another important point is overriding the `get adapter` method. If you don't
 override this method, the collection will use the `defaultAdapter` as adapter,
-which is by default null (you should also change this). Adapters are available
+which is by default null. If the defaultAdapter is null and it is the first time
+the defaultAdapter is looked up, ActiveRecord will search the directory from where
+you ran the current script for a database.yaml file and use the adapter with
+the specified environment (default: development, you can change this by setting
+the top level `environment` variable in ActiveRecord). If it can't find a
+database.yaml file there, it will also lookup the parent directory for
+that file. If it still can't find a file there, it will set the defaultAdapter
+to null. An example of a specification of a postgres adapter can be found in
+test/database.yaml. Adapters are available
 via the [ActiveMigration library](https://github.com/Adracus/ActiveMigration),
 which also features generation and execution of Migration files. Contribution
 of further adapters as well as contribution to this repository are appreciated.

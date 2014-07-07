@@ -346,7 +346,7 @@ abstract class Collection {
    * If it is not overridden, the [defaultAdapter] will
    * be used.
    */
-  DatabaseAdapter get adapter => defaultAdapter;
+  DatabaseAdapter get adapter => retrieveDefaultAdapter();
   
   
   /**
