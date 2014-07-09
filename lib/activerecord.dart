@@ -14,6 +14,7 @@ part 'relation.dart';
 part 'model.dart';
 part 'collection.dart';
 part 'validations.dart';
+part 'database_adapter.dart';
 
 DatabaseAdapter defaultAdapter = null;  //Inject own defaultAdapter here
 var environment = "development";

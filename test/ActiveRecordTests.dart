@@ -1,5 +1,5 @@
 import 'package:activerecord/activerecord.dart';
-import 'package:activemigration/activemigration.dart';
+import 'package:postgres_adapter/postgres_adapter.dart';
 import 'package:unittest/unittest.dart';
 import 'package:logging/logging.dart';
 import 'dart:async';
