@@ -1,18 +1,10 @@
 part of activerecord;
 
-class Config {
-  DatabaseAdapter _adapter;
-  Schema _schema;
-  
-  Config() {
-    _adapter = null;
-    _schema = null;
-  }
-  
-  DatabaseAdapter get adapter => _adapter;
-  Schema get schema => _schema;
-}
-
+/**
+ * Schema class. Contains information about tableName, variables and relations.
+ * 
+ * This class is used by Collections to store persistence information.
+ */
 class Schema {
   String _tableName;
   Map<String, Variable> _variables = {};
@@ -20,18 +12,18 @@ class Schema {
   Schema(this._tableName, List<Variable> vars) {
     vars.forEach((v) => _variables[v.name] = v);
   }
-  Variable getProperty(String name) {
-    return _variables[name];
-  }
-  bool hasProperty(String name) {
-    return _variables.keys.contains(name);
-  }
+  Variable getProperty(String name) => _variables[name];
+  
+  bool hasProperty(String name) => _variables.keys.contains(name);
+  
   void addVariable(Variable v) {
     _variables[v.name] = v;
   }
+  
   void addVariables(List<Variable> vars) {
     vars.forEach((v) => addVariable(v));
   }
+  
   toString() {
     var result = "{\n";
     _variables.forEach((_, val) => result += "\t$val\n");

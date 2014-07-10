@@ -1,9 +1,35 @@
 part of activerecord;
 
+/**
+ * A typedef for methods which can be used during the lifecycle of a model.
+ * 
+ * Each lifecycle method has to be of this type.
+ */
 typedef LifecycleMethod(Model m);
 
+/**
+ * The collection class is your link to your persistence. Subclass as needed.
+ * 
+ * The collection class provides all methods to define your persistence.
+ * Variables can be defined by overriding the get variables method.
+ * Relations can be defined by overriding hasMany or belongsTo.
+ * Model instances can be received by calling the nu method.
+ */
 abstract class Collection {
+  /**
+   * The default adapter used by this instance. Defaults to get adapter.
+   * 
+   * The default adapter defaults to the result of the get adapter method.
+   * It will be cached initially for not creating an adapter eveytime it is
+   * needed.
+   */
   DatabaseAdapter _adapter;
+  
+  /**
+   * Container of the database specific schema of this collection.
+   * 
+   * Contains information about table name, variables and relations.
+   */
   Schema _schema;
   
   /**
