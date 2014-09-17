@@ -111,24 +111,24 @@ class _Model extends Object with DynObject<dynamic> implements Model{
     }
   }
   
-  String toString() => "Instance of 'Model' of table ${_parent.schema.tableName}";
+  String toString() => "Instance of 'Model' of table ${_parent._schema.tableName}";
   JsonObject get jsonObject {
     var res = new JsonObject.fromMap(_displayMap);
     return res;
   }
   
   Map<String, dynamic> get _displayMap {
-    var variables = parent.schema.variables;
+    var variables = parent._schema.variables;
     variables.forEach((v) => this[v.name] == null? this[v.name] = null : null);
     return _vars;
   }
   
   setVariable(String key, v) {
-    if (this._parent.schema.hasProperty(key)) {
+    if (this._parent._schema.hasProperty(key)) {
         super[key] = v;
       this._isDirty = true;
     } else {
-      throw new ArgumentError("${_parent.schema.tableName} does not have property $key");
+      throw new ArgumentError("${_parent._schema.tableName} does not have property $key");
     }
   }
   

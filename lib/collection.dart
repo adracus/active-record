@@ -139,7 +139,7 @@ abstract class Collection {
         this.beforeCreate(m);
         m["updated_at"] = new DateTime.now().toIso8601String();
         m["created_at"] = new DateTime.now().toIso8601String();
-        return _adapter.saveModel(schema, m).then((created) {
+        return _adapter.saveModel(_schema, m).then((created) {
           created.setClean();
           m = created;
           log.info("Created new model $m");
@@ -163,7 +163,7 @@ abstract class Collection {
       if (valRes) {
         this.beforeUpdate(m);
         m["updated_at"] = new DateTime.now().toIso8601String();
-        return _adapter.updateModel(schema, m).then((updated) {
+        return _adapter.updateModel(_schema, m).then((updated) {
           updated.setClean();
           m = updated;
           this.afterUpdate(updated);
@@ -201,7 +201,7 @@ abstract class Collection {
   Future<bool> validate(Model m, int flag) {
     if (m.parent != this) throw("Not same parent");
     var validationResults = new List<Future<bool>>();
-    schema.variables.forEach((v) {
+    _schema.variables.forEach((v) {
       v.validations.forEach((Validation validation) {
         validationResults.add(validation.validate(v, m, m[v.name], flag));
       });

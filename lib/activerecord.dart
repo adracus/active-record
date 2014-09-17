@@ -95,8 +95,3 @@ DatabaseAdapter _findDatabaseFile(Directory dir) {
   if(candidates.length > 1) throw "Too many database.yml files";
   return parseDatabaseFile(candidates.first as File)[environment].adapter;
 }
-
-@proxy
-abstract class Row {
-  void forEach(void f(String columNames, columnValues));
-}

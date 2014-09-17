@@ -49,7 +49,6 @@ main(List<String> arguments) {
         empty["name"] = "Mark";
         empty["age"] = 16;
         expect(empty.parent, equals(person));
-        expect(empty.parent.schema.tableName, equals("Person"));
         expect(empty["id"], equals(1));
         expect(empty["name"], equals("Mark"));
         expect(empty["age"], equals(16));
